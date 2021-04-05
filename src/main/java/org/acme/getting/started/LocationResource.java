@@ -9,10 +9,10 @@ import javax.ws.rs.core.MediaType;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
 @Path("/hello")
-public class GreetingResource {
+public class LocationResource {
 
     @Inject
-    GreetingService service;
+    LocationService service;
 
     @GET
     @Produces(MediaType.TEXT_PLAIN)
