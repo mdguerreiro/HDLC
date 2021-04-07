@@ -4,6 +4,7 @@ import org.acme.lifecycle.AppLifecycleBean;
 import org.jboss.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -29,14 +30,12 @@ public class ProofService {
         Location my_Loc = (Location) AppLifecycleBean.epochs.get(0).get(System.getenv("USERNAME"));
         Location lpr_loc = new Location(lpr.xLoc, lpr.yLoc);
 
-        if (is_Close(my_Loc, lpr_loc)){
-            System.out.println("IS CLOSE");
-
-            return Response.ok(new LocationProofReply()).build();
+        if (!is_Close(my_Loc, lpr_loc)){
+            throw new NotFoundException("INVALID LOCATION");
         }
-        System.out.println("AINT CLOSE");
+        System.out.println("IS CLOSE");
 
-        return Response.status(Response.Status.NOT_FOUND).build();
+        return Response.ok(new LocationProofReply()).build();
     }
 
     private boolean is_Close(Location l1, Location l2){

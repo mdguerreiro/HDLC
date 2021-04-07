@@ -34,13 +34,12 @@ public class ProofResource {
     @GET
     @Path("/test")
     public Response test(){
-        LocationProofRequest lpr = new LocationProofRequest("user2", 0, 1);
+        LocationProofRequest lpr = new LocationProofRequest("user2", 0, 2);
         try{
             Response r = proofResourceClient.proof_request(lpr);
-            System.out.println("EEEEEEEEH!!!!!!");
-            System.out.println(r.getStatus());
             return r;
         }catch(org.jboss.resteasy.client.exception.ResteasyWebApplicationException e){
+            System.out.println("ERROR - Location was not valid");
             return Response.status(Response.Status.NOT_FOUND).build();
         }
     }
