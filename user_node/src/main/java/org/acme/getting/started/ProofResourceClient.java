@@ -12,5 +12,5 @@ public interface ProofResourceClient {
 
     @POST
     @Path("/request")
-    Response proof_request(LocationProofRequest lpr);
+    LocationProofReply proof_request(LocationProofRequest lpr);
 }

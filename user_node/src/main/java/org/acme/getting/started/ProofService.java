@@ -3,43 +3,30 @@ package org.acme.getting.started;
 import org.acme.lifecycle.AppLifecycleBean;
 import org.jboss.logging.Logger;
 
-import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 
-@ApplicationScoped
+@RequestScoped
 public class ProofService {
     private static final Logger LOG = Logger.getLogger(ProofService.class);
 
     public ProofService(){
-
     }
-    
-    public Response location_proof_request(LocationProofRequest lpr) {
+
+
+    public LocationProofReply location_proof_request(LocationProofRequest lpr) {
         LOG.info("LPR Received from " + lpr.username);
-        System.out.println(AppLifecycleBean.hosts.get(lpr.username));
         Location my_Loc = (Location) AppLifecycleBean.epochs.get(0).get(System.getenv("USERNAME"));
         Location lpr_loc = new Location(lpr.xLoc, lpr.yLoc);
 
-        if (!is_Close(my_Loc, lpr_loc)){
-            throw new NotFoundException("INVALID LOCATION");
+        if (!AppLifecycleBean.is_Close(my_Loc, lpr_loc)){
+            LOG.error("LPR Received from " + lpr.username + " has invalid location.");
+            return new LocationProofReply("DENIED");
         }
-        System.out.println("IS CLOSE");
-
-        return Response.ok(new LocationProofReply()).build();
-    }
-
-    private boolean is_Close(Location l1, Location l2){
-        return (Math.abs(l2.get_X()-l1.get_X()) <= 1 && Math.abs(l2.get_Y()-l1.get_Y()) <= 1);
+        LOG.info("Location confirmed. Sending LP Reply to " + lpr.username);
+        return new LocationProofReply("APPROVED");
     }
 
 

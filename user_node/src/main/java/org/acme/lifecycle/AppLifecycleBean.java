@@ -6,6 +6,7 @@ import javax.sound.midi.Soundbank;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
+import org.acme.getting.started.EpochService;
 import org.acme.getting.started.Location;
 import org.jboss.logging.Logger;
 import org.json.simple.JSONArray;
@@ -38,6 +39,8 @@ public class AppLifecycleBean {
         load_json_users();
         LOGGER.info("Loading bluetooth grid emulator...");
         load_json_grid();
+        LOGGER.info("Loading epoch time clock...");
+        new EpochService();
     }
 
     void onStop(@Observes ShutdownEvent ev) {
@@ -75,8 +78,8 @@ public class AppLifecycleBean {
                     int x = Integer.parseInt((String) coords.get("x"));
                     int y = Integer.parseInt((String) coords.get("y"));
                     users_loc.put((String)user, new Location(x, y));
-                    epochs.add(users_loc);
                 }
+                epochs.add(users_loc);
 
             }
 
@@ -90,4 +93,7 @@ public class AppLifecycleBean {
         }
     }
 
+    public static boolean is_Close(Location l1, Location l2){
+        return (Math.abs(l2.get_X()-l1.get_X()) <= 1 && Math.abs(l2.get_Y()-l1.get_Y()) <= 1);
+    }
 }
