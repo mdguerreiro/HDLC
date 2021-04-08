@@ -2,14 +2,11 @@ package org.acme.lifecycle;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
-import javax.sound.midi.Soundbank;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
-import org.acme.getting.started.EpochService;
 import org.acme.getting.started.Location;
 import org.jboss.logging.Logger;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -18,7 +15,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 @ApplicationScoped
 public class AppLifecycleBean {
@@ -40,7 +36,6 @@ public class AppLifecycleBean {
         LOGGER.info("Loading bluetooth grid emulator...");
         load_json_grid();
         LOGGER.info("Loading epoch time clock...");
-        new EpochService();
     }
 
     void onStop(@Observes ShutdownEvent ev) {

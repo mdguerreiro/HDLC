@@ -27,7 +27,6 @@ public class ProofResource {
     @RestClient
     ProofResourceClient proofResourceClient;
 
-
     @POST
     @Path("/request")
     public LocationProofReply proof_request(LocationProofRequest lpr) {
