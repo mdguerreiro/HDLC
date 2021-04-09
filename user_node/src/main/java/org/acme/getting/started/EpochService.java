@@ -22,11 +22,6 @@ public class EpochService {
     private static final Logger LOG = Logger.getLogger(EpochService.class);
     private int epoch = -1;
 
-    @Inject
-    @RestClient
-    ProofResourceClient proofResourceClient;
-
-
     public EpochService(){
         TimerTask repeatedTask = new TimerTask() {
             public void run() {
@@ -57,12 +52,15 @@ public class EpochService {
         List<LocationProofReply> replies = new ArrayList<>();
         while(it.hasNext()){
             Map.Entry elem = (Map.Entry)it.next();
-            Location l = (Location) elem.getValue();  
+            Location l = (Location) elem.getValue();
             if(!elem.getKey().equals(my_username)){
                 if(AppLifecycleBean.is_Close(my_Loc, l)){
-                    System.out.println("SENDING TO NEIGHBOURS BECAUSE THEY ARE CLOSE");
-                    System.out.println("ME AT EPOCH " + get_epoch() + " " + my_Loc.get_X()+my_Loc.get_Y());
-                    System.out.println("NEIGHBOUR " + elem.getKey() + "AT EPOCH " + get_epoch() + " " + l.get_X()+l.get_Y());
+                    LOG.info(String.format("Process %s found %s close at epoch %d. Starting broadcast.", my_username,
+                            elem.getKey(), get_epoch()));
+                    LOG.info(String.format("%s process coordinates -> X = %d, Y= %d", my_username, my_Loc.get_X(),
+                            my_Loc.get_Y()));
+                    LOG.info(String.format("%s process coordinates -> X = %d, Y= %d", elem.getKey(), l.get_X(),
+                            l.get_Y()));
                     String hostname = AppLifecycleBean.hosts.get(elem.getKey());
                     ProofResourceClient prc = RestClientBuilder.newBuilder()
                             .baseUri(new URI(hostname))
