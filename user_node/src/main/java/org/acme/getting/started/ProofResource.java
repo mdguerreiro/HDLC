@@ -23,30 +23,10 @@ public class ProofResource {
     @Inject
     ProofService service;
 
-    @Inject
-    @RestClient
-    ProofResourceClient proofResourceClient;
-
     @POST
     @Path("/request")
     public LocationProofReply proof_request(LocationProofRequest lpr) {
         return service.location_proof_request(lpr);
-    }
-
-    @GET
-    @Path("/test")
-    public LocationProofReply test(){
-        LocationProofRequest lpr = new LocationProofRequest("user2", 0, 1);
-        try{
-            LocationProofReply r = proofResourceClient.proof_request(lpr);
-            System.out.println(r.status);
-            return r;
-        }catch(org.jboss.resteasy.client.exception.ResteasyWebApplicationException e){
-            System.out.println("ERROR - Location was not valid");
-
-        }
-        return new LocationProofReply("DENIED");
-
     }
 
 }

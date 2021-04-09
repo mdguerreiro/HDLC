@@ -3,16 +3,13 @@ package org.acme.getting.started;
 import io.quarkus.runtime.Startup;
 import org.acme.lifecycle.AppLifecycleBean;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
-import org.jboss.resteasy.annotations.ClientURI;
+
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Model;
-import javax.inject.Inject;
+
 import javax.inject.Singleton;
 
 
@@ -67,6 +64,7 @@ public class EpochService {
                             .build(ProofResourceClient.class);
                     LocationProofReply lp_reply = prc.proof_request(lpr);
                     replies.add(lp_reply);
+                    // @TODO Send to server
                 }
             }
         }

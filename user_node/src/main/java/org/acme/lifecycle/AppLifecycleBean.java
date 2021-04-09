@@ -33,8 +33,8 @@ public class AppLifecycleBean {
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
         LOGGER.info("Loading users/hosts info file...");
         load_json_users();
-        LOGGER.info("Loading bluetooth grid emulator...");
         load_json_grid();
+        LOGGER.info("Loading bluetooth grid emulator...");
         LOGGER.info("Loading epoch time clock...");
     }
 
@@ -77,8 +77,6 @@ public class AppLifecycleBean {
                 epochs.add(users_loc);
 
             }
-
-
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -89,6 +87,7 @@ public class AppLifecycleBean {
     }
 
     public static boolean is_Close(Location l1, Location l2){
+        //@TODO -> Improve distance function
         return (Math.abs(l2.get_X()-l1.get_X()) <= 1 && Math.abs(l2.get_Y()-l1.get_Y()) <= 1);
     }
 }
