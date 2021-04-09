@@ -24,6 +24,8 @@ public class EpochService {
             public void run() {
                 LOG.info("Clock tick: epoch updated");
                 epoch++;
+                if(epoch == 5)
+                    System.exit(1);
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
@@ -37,23 +39,24 @@ public class EpochService {
             }
         };
         Timer timer = new Timer("Timer");
-        timer.scheduleAtFixedRate(repeatedTask, 0, 60000);
+        timer.scheduleAtFixedRate(repeatedTask, 0, 6000);
 
     }
 
     private void request_location_proof() throws URISyntaxException {
+        int epoch = get_epoch();
         String my_username = System.getenv("USERNAME");
-        Location my_Loc = (Location) AppLifecycleBean.epochs.get(get_epoch()).get(my_username);
-        Iterator it = AppLifecycleBean.epochs.get(get_epoch()).entrySet().iterator();
+        Location my_Loc = (Location) AppLifecycleBean.epochs.get(epoch).get(my_username);
+        Iterator it = AppLifecycleBean.epochs.get(epoch).entrySet().iterator();
         LocationProofRequest lpr = new LocationProofRequest(my_username, my_Loc.get_X(), my_Loc.get_Y());
-        List<LocationProofReply> replies = new ArrayList<>();
+        ArrayList<LocationProofReply> replies = new ArrayList<>();
         while(it.hasNext()){
             Map.Entry elem = (Map.Entry)it.next();
             Location l = (Location) elem.getValue();
             if(!elem.getKey().equals(my_username)){
                 if(AppLifecycleBean.is_Close(my_Loc, l)){
                     LOG.info(String.format("Process %s found %s close at epoch %d. Starting broadcast.", my_username,
-                            elem.getKey(), get_epoch()));
+                            elem.getKey(), epoch));
                     LOG.info(String.format("%s process coordinates -> X = %d, Y= %d", my_username, my_Loc.get_X(),
                             my_Loc.get_Y()));
                     LOG.info(String.format("%s process coordinates -> X = %d, Y= %d", elem.getKey(), l.get_X(),
@@ -64,7 +67,11 @@ public class EpochService {
                             .build(ProofResourceClient.class);
                     LocationProofReply lp_reply = prc.proof_request(lpr);
                     replies.add(lp_reply);
-                    // @TODO Send to server
+                    LocationReport lr = new LocationReport(my_username, epoch, my_Loc.get_X(), my_Loc.get_Y(), replies);
+                    LocationServerClient lsc = RestClientBuilder.newBuilder()
+                            .baseUri(new URI("http://localhost:8080"))
+                            .build(LocationServerClient.class);
+                    lsc.submitLocationReport(lr);
                 }
             }
         }

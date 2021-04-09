@@ -28,10 +28,10 @@ public class ProofService {
         LOG.info(String.format("%s process coordinates -> X = %d, Y= %d", lpr.username, l.get_X(), l.get_Y()));
         if (!AppLifecycleBean.is_Close(my_Loc, l)){
             LOG.error("LPR Received from " + lpr.username + " has invalid location.");
-            return new LocationProofReply("DENIED");
+            return new LocationProofReply("DENIED", my_username);
         }
         LOG.info("Location confirmed. Sending LP Reply to " + lpr.username);
-        return new LocationProofReply("APPROVED");
+        return new LocationProofReply("APPROVED", my_username);
     }
 
 
