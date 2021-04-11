@@ -23,9 +23,7 @@ public class LocationResource {
     @Produces(MediaType.TEXT_PLAIN)
     @Path("/{userID}/{epoch}")
     public String obtainLocationReport(@PathParam("userID") String userID, @PathParam("epoch") String epoch) {
-        System.out.println("RECEIVED REQUEST");
-        System.out.println(userID);
-        System.out.println(epoch);
+        // @TODO: LOG INFO
         return service.get_location_report(userID, Integer.parseInt(epoch));
     }
 }
