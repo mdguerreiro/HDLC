@@ -6,6 +6,13 @@ import javax.ws.rs.core.MediaType;
 
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
+import java.security.cert.CertificateException;
+
 @Path("/location")
 public class LocationResource {
 
@@ -15,7 +22,7 @@ public class LocationResource {
     @POST
     //@Produces(MediaType.TEXT_PLAIN)
     @Path("/")
-    public String submitLocationReport(LocationReport lr) {
+    public String submitLocationReport(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
         return service.submit_location_report(lr);
     }
 

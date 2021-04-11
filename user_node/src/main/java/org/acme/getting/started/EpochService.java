@@ -1,15 +1,20 @@
 package org.acme.getting.started;
 
 import io.quarkus.runtime.Startup;
+import org.acme.crypto.SignatureService;
 import org.acme.lifecycle.AppLifecycleBean;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.jboss.logging.Logger;
 
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.*;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 
@@ -43,37 +48,57 @@ public class EpochService {
 
     }
 
+    @Inject
+    SignatureService signatureService;
+
     private void request_location_proof() throws URISyntaxException {
         int epoch = get_epoch();
         String my_username = System.getenv("USERNAME");
         Location my_Loc = (Location) AppLifecycleBean.epochs.get(epoch).get(my_username);
         Iterator it = AppLifecycleBean.epochs.get(epoch).entrySet().iterator();
-        LocationProofRequest lpr = new LocationProofRequest(my_username, my_Loc.get_X(), my_Loc.get_Y());
-        ArrayList<LocationProofReply> replies = new ArrayList<>();
-        while(it.hasNext()){
-            Map.Entry elem = (Map.Entry)it.next();
-            Location l = (Location) elem.getValue();
-            if(!elem.getKey().equals(my_username)){
-                if(AppLifecycleBean.is_Close(my_Loc, l)){
-                    LOG.info(String.format("Process %s found %s close at epoch %d. Starting broadcast.", my_username,
-                            elem.getKey(), epoch));
-                    LOG.info(String.format("%s process coordinates -> X = %d, Y= %d", my_username, my_Loc.get_X(),
-                            my_Loc.get_Y()));
-                    LOG.info(String.format("%s process coordinates -> X = %d, Y= %d", elem.getKey(), l.get_X(),
-                            l.get_Y()));
-                    String hostname = AppLifecycleBean.hosts.get(elem.getKey());
-                    ProofResourceClient prc = RestClientBuilder.newBuilder()
-                            .baseUri(new URI(hostname))
-                            .build(ProofResourceClient.class);
-                    LocationProofReply lp_reply = prc.proof_request(lpr);
-                    replies.add(lp_reply);
-                    LocationReport lr = new LocationReport(my_username, epoch, my_Loc.get_X(), my_Loc.get_Y(), replies);
-                    LocationServerClient lsc = RestClientBuilder.newBuilder()
-                            .baseUri(new URI("http://localhost:8080"))
-                            .build(LocationServerClient.class);
-                    lsc.submitLocationReport(lr);
+        try {
+            byte[] digitalSignature = signatureService.generateSha256WithRSASignatureForLocationRequest(my_username, my_Loc.get_X(), my_Loc.get_Y());
+
+            LocationProofRequest lpr = new LocationProofRequest(my_username, my_Loc.get_X(), my_Loc.get_Y(), digitalSignature);
+            ArrayList<LocationProofReply> replies = new ArrayList<>();
+            while(it.hasNext()){
+                Map.Entry elem = (Map.Entry)it.next();
+                Location l = (Location) elem.getValue();
+                if(!elem.getKey().equals(my_username)){
+                    if(AppLifecycleBean.is_Close(my_Loc, l)){
+                        LOG.info(String.format("Process %s found %s close at epoch %d. Starting broadcast.", my_username,
+                                elem.getKey(), epoch));
+                        LOG.info(String.format("%s process coordinates -> X = %d, Y= %d", my_username, my_Loc.get_X(),
+                                my_Loc.get_Y()));
+                        LOG.info(String.format("%s process coordinates -> X = %d, Y= %d", elem.getKey(), l.get_X(),
+                                l.get_Y()));
+                        String hostname = AppLifecycleBean.hosts.get(elem.getKey());
+                        ProofResourceClient prc = RestClientBuilder.newBuilder()
+                                .baseUri(new URI(hostname))
+                                .build(ProofResourceClient.class);
+
+                        LocationProofReply lp_reply = prc.proof_request(lpr);
+
+                        boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForLocationRequest(lp_reply.status, lp_reply.signer, lp_reply.signature);
+
+                        if(isSignatureCorrect) {
+                            LOG.info(String.format("Signature is correct. Adding the correct reply: '%s' to the list of replies", lp_reply.signer));
+                            replies.add(lp_reply);
+                        }
+
+                        String signatureBase64 = signatureService.generateSha256WithRSASignatureForLocationReport(my_username, epoch, my_Loc.get_X(), my_Loc.get_Y(), replies);
+
+                        LocationReport lr = new LocationReport(my_username, my_Loc.get_X(), my_Loc.get_Y(), replies, signatureBase64);
+                        LocationServerClient lsc = RestClientBuilder.newBuilder()
+                                .baseUri(new URI("http://localhost:8080"))
+                                .build(LocationServerClient.class);
+                        lsc.submitLocationReport(lr);
+                    }
                 }
             }
+        } catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException
+                | IOException | CertificateException | SignatureException | InvalidKeyException e) {
+            e.printStackTrace();
         }
     }
 

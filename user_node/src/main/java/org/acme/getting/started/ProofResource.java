@@ -12,6 +12,9 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.awt.*;
 import java.io.FileReader;
+import java.io.IOException;
+import java.security.*;
+import java.security.cert.CertificateException;
 
 
 @Path("/proof")
@@ -25,7 +28,7 @@ public class ProofResource {
 
     @POST
     @Path("/request")
-    public LocationProofReply proof_request(LocationProofRequest lpr) {
+    public LocationProofReply proof_request(LocationProofRequest lpr) throws UnrecoverableKeyException, CertificateException, KeyStoreException, NoSuchAlgorithmException, IOException, SignatureException, InvalidKeyException {
         return service.location_proof_request(lpr);
     }
 
