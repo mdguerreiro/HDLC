@@ -76,7 +76,7 @@ public class SignatureService {
         return (PrivateKey) keyStore.getKey(keyAlias, keyStorePassword.toCharArray());
     }
 
-    public boolean verifySha256WithRSASignature(String username, int xLoc, int yLoc, ArrayList<LocationProofReply>replies, String receivedSignatureBase64) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException {
+    public boolean verifySha256WithRSASignature(String username, int epoch, int xLoc, int yLoc, ArrayList<LocationProofReply>replies, String receivedSignatureBase64) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException {
         LOG.info(String.format("Validating Sha256 with RSA Signature"));
 
         PublicKey publicKey = getPublicKeyFromKeystore(username);

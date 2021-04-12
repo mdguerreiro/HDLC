@@ -28,7 +28,7 @@ public class LocationService {
     public String submit_location_report(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
         ConcurrentHashMap<Integer, LocationReport> location_reports = new ConcurrentHashMap<>();
 
-        boolean isSignatureCorrect = signatureService.verifySha256WithRSASignature(lr.username, lr.x, lr.y, lr.replies, lr.signatureBase64);
+        boolean isSignatureCorrect = signatureService.verifySha256WithRSASignature(lr.username, lr.epoch, lr.x, lr.y, lr.replies, lr.signatureBase64);
 
         if(!isSignatureCorrect) {
             LOG.info("Signature Validation Failed. Aborting");

@@ -88,7 +88,7 @@ public class EpochService {
 
                         String signatureBase64 = signatureService.generateSha256WithRSASignatureForLocationReport(my_username, epoch, my_Loc.get_X(), my_Loc.get_Y(), replies);
 
-                        LocationReport lr = new LocationReport(my_username, my_Loc.get_X(), my_Loc.get_Y(), replies, signatureBase64);
+                        LocationReport lr = new LocationReport(my_username, epoch, my_Loc.get_X(), my_Loc.get_Y(), replies, signatureBase64);
                         LocationServerClient lsc = RestClientBuilder.newBuilder()
                                 .baseUri(new URI("http://localhost:8080"))
                                 .build(LocationServerClient.class);
