@@ -6,17 +6,17 @@ public class LocationProofRequest {
 
     public String username;
     public int xLoc, yLoc;
-    public byte[] signature;
+    public String signatureBase64;
 
     public LocationProofRequest(){
 
     }
 
-    public LocationProofRequest(String username, int xLoc, int yLoc, byte[] signature){
+    public LocationProofRequest(String username, int xLoc, int yLoc, String signatureBase64){
         this.username = username;
         this.xLoc = xLoc;
         this.yLoc = yLoc;
-        this.signature = signature;
+        this.signatureBase64 = signatureBase64;
     }
 
 }

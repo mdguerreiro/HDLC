@@ -39,7 +39,6 @@ public class LocationService {
             return "Failed";
         }
 
-
         location_reports.put(lr.epoch, lr);
         users.put(lr.username, location_reports);
 
