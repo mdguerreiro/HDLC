@@ -57,9 +57,9 @@ public class EpochService {
         Location my_Loc = (Location) AppLifecycleBean.epochs.get(epoch).get(my_username);
         Iterator it = AppLifecycleBean.epochs.get(epoch).entrySet().iterator();
         try {
-            byte[] digitalSignature = signatureService.generateSha256WithRSASignatureForLocationRequest(my_username, my_Loc.get_X(), my_Loc.get_Y());
+            String signatureBase64 = signatureService.generateSha256WithRSASignatureForLocationRequest(my_username, my_Loc.get_X(), my_Loc.get_Y());
 
-            LocationProofRequest lpr = new LocationProofRequest(my_username, my_Loc.get_X(), my_Loc.get_Y(), digitalSignature);
+            LocationProofRequest lpr = new LocationProofRequest(my_username, my_Loc.get_X(), my_Loc.get_Y(), signatureBase64);
             ArrayList<LocationProofReply> replies = new ArrayList<>();
             while(it.hasNext()){
                 Map.Entry elem = (Map.Entry)it.next();
@@ -79,16 +79,17 @@ public class EpochService {
 
                         LocationProofReply lp_reply = prc.proof_request(lpr);
 
-                        boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForLocationRequest(lp_reply.status, lp_reply.signer, lp_reply.signature);
+                        boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForLocationRequest(lp_reply.status, lp_reply.signer, lp_reply.signatureBase64);
 
                         if(isSignatureCorrect) {
                             LOG.info(String.format("Signature is correct. Adding the correct reply: '%s' to the list of replies", lp_reply.signer));
                             replies.add(lp_reply);
                         }
 
-                        String signatureBase64 = signatureService.generateSha256WithRSASignatureForLocationReport(my_username, epoch, my_Loc.get_X(), my_Loc.get_Y(), replies);
+                        String signatureBase64ForLocationReport = signatureService.generateSha256WithRSASignatureForLocationReport(my_username, epoch, my_Loc.get_X(), my_Loc.get_Y(), replies);
+                        System.out.println("BASE64  " + signatureBase64);
 
-                        LocationReport lr = new LocationReport(my_username, epoch, my_Loc.get_X(), my_Loc.get_Y(), replies, signatureBase64);
+                        LocationReport lr = new LocationReport(my_username, epoch, my_Loc.get_X(), my_Loc.get_Y(), replies, signatureBase64ForLocationReport);
                         LocationServerClient lsc = RestClientBuilder.newBuilder()
                                 .baseUri(new URI("http://localhost:8080"))
                                 .build(LocationServerClient.class);

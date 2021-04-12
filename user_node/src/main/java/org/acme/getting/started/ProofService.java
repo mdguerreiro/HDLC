@@ -28,14 +28,14 @@ public class ProofService {
     public LocationProofReply location_proof_request(LocationProofRequest lpr) throws UnrecoverableKeyException, CertificateException, KeyStoreException, NoSuchAlgorithmException, IOException, SignatureException, InvalidKeyException {
         String my_username = System.getenv("USERNAME");
         String status = "DENIED";
-        byte[] signature;
+        String signatureBase64;
         try {
-            boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForLocationReply(lpr.username, lpr.xLoc, lpr.yLoc, lpr.signature);
+            boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForLocationReply(lpr.username, lpr.xLoc, lpr.yLoc, lpr.signatureBase64);
 
             if(!isSignatureCorrect) {
                 LOG.info("Signature Validation Failed. Sending LP Reply to " + lpr.username);
-                signature = signatureService.generateSha256WithRSASignatureForLocationReply(my_username, status);
-                return new LocationProofReply(status, my_username, signature);
+                signatureBase64 = signatureService.generateSha256WithRSASignatureForLocationReply(my_username, status);
+                return new LocationProofReply(status, my_username, signatureBase64);
             }
 
             int epoch = es.get_epoch();
@@ -46,18 +46,18 @@ public class ProofService {
             LOG.info(String.format("%s process coordinates -> X = %d, Y= %d", lpr.username, l.get_X(), l.get_Y()));
             if (!AppLifecycleBean.is_Close(my_Loc, l)){
                 LOG.error("LPR Received from " + lpr.username + " has invalid location.");
-                signature = signatureService.generateSha256WithRSASignatureForLocationReply(my_username, status);
-                return new LocationProofReply(status, my_username, signature);
+                signatureBase64 = signatureService.generateSha256WithRSASignatureForLocationReply(my_username, status);
+                return new LocationProofReply(status, my_username, signatureBase64);
             }
             LOG.info("Location confirmed. Sending LP Reply to " + lpr.username);
             status = "APPROVED";
-            signature = signatureService.generateSha256WithRSASignatureForLocationReply(my_username, status);
-            return new LocationProofReply(status, my_username, signature);
+            signatureBase64 = signatureService.generateSha256WithRSASignatureForLocationReply(my_username, status);
+            return new LocationProofReply(status, my_username, signatureBase64);
         } catch (NoSuchAlgorithmException | KeyStoreException | IOException | InvalidKeyException | CertificateException | SignatureException | UnrecoverableKeyException e) {
             e.printStackTrace();
             LOG.info("Signature Validation Failed. Sending LP Reply to " + lpr.username);
-            signature = signatureService.generateSha256WithRSASignatureForLocationReply(my_username, status);
-            return new LocationProofReply(status, my_username, signature);
+            signatureBase64 = signatureService.generateSha256WithRSASignatureForLocationReply(my_username, status);
+            return new LocationProofReply(status, my_username, signatureBase64);
         }
     }
 }
