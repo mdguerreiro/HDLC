@@ -5,10 +5,9 @@ import java.util.ArrayList;
 public class LocationReport {
 
 
-    public String username;
+    public String username, signatureBase64;
     public int x, y, epoch;
     public ArrayList<LocationProofReply> replies;
-    public String signatureBase64;
 
     public LocationReport(){
 
