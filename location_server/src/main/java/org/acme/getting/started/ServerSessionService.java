@@ -1,4 +1,4 @@
-package org.acme.crypto;
+package org.acme.getting.started;
 
 import org.acme.crypto.SignatureService;
 import org.jboss.logging.Logger;
@@ -23,6 +23,8 @@ import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 
 
+import javax.enterprise.context.ApplicationScoped;
+
 import java.io.IOException;
 
 import org.acme.utils.Util;
@@ -35,8 +37,7 @@ import org.acme.getting.started.SignedSessionKeyRequest;
 import org.acme.getting.started.CipheredSessionKeyResponse;
 
 
-@Startup
-@Singleton
+@ApplicationScoped
 public class ServerSessionService {
 
     private static final Logger LOG = Logger.getLogger(SignatureService.class);
