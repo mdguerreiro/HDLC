@@ -17,4 +17,18 @@ public class SignedSessionKeyRequest {
         this.signature = signature;
     }
 
+    public SessionKeyRequest getSessionKeyRequest(){
+        return sessionKeyRequest;
+    }
+
+    public byte[] getSignature(){
+        return signature;
+    }
+
+
+    public String toString(){
+        String signatureString = new String(signature);
+        String nonceString = Integer.toString(sessionKeyRequest.getNonce());
+        return sessionKeyRequest.getUserId() +"\n"+nonceString +  "\n" + signatureString;
+    }
 }

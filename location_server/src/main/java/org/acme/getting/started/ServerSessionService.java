@@ -73,6 +73,9 @@ public class ServerSessionService {
 
     public CipheredSessionKeyResponse handleSignedSessionKeyRequest( SignedSessionKeyRequest sskr ) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException,SignatureException, InvalidKeyException{
 
+        LOG.info("received session key request ------------------------");
+        LOG.info(sskr.toString());
+        LOG.info("ssk END -------------------------");
         String userId = sskr.getSessionKeyRequest().getUserId();
         int nonce =  sskr.getSessionKeyRequest().getNonce();
 

@@ -25,4 +25,11 @@ public class SignedSessionKeyRequest {
         return signature;
     }
 
+
+    public String toString(){
+        String signatureString = new String(signature);
+        String nonceString = Integer.toString(sessionKeyRequest.getNonce());
+        return sessionKeyRequest.getUserId() +"\n"+nonceString +  "\n" + signatureString;
+    }
+
 }

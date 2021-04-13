@@ -2,6 +2,7 @@ package org.acme.getting.started;
 
 import io.quarkus.runtime.Startup;
 import org.acme.crypto.SignatureService;
+import org.acme.crypto.SessionService;
 import org.acme.lifecycle.AppLifecycleBean;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.jboss.logging.Logger;
@@ -25,6 +26,14 @@ public class EpochService {
     private int epoch = -1;
 
     public EpochService(){
+
+        try {
+            getServerSessionKey();
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+
         TimerTask repeatedTask = new TimerTask() {
             public void run() {
                 LOG.info("Clock tick: epoch updated");
@@ -50,6 +59,7 @@ public class EpochService {
 
     @Inject
     SignatureService signatureService;
+
 
     private void request_location_proof() throws URISyntaxException {
         int epoch = get_epoch();
@@ -106,5 +116,34 @@ public class EpochService {
         //LOG.info("Returning epoch time from service: " + epoch);
         return epoch;
     }
+
+
+    private CipheredSessionKeyResponse getServerSessionKey() throws Exception{
+
+        SessionService sessionService = new SessionService();
+        String my_username = System.getenv("USERNAME");
+
+        LOG.info("Getting key for user");
+        LOG.info(my_username);
+
+        PrivateKey userPriv = sessionService.getPrivateKeyFromKeystore(my_username);
+        SessionKeyRequest skr = new SessionKeyRequest(my_username, 0);
+
+        SignedSessionKeyRequest sskr = sessionService.signSessionKeyRequest(skr, userPriv);
+
+        LOG.info(sskr.toString());
+
+        SessionServerClient ssc = RestClientBuilder.newBuilder()
+                .baseUri(new URI("http://localhost:8080"))
+                .build(SessionServerClient.class);
+        String response = ssc.submitSignedSessionKeyRequest(sskr);
+
+        LOG.info("Session key request response - " + response);
+
+        //TODO
+        return null;
+
+    }
+
 
 }
