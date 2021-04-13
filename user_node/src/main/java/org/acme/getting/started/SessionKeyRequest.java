@@ -13,4 +13,11 @@ public class SessionKeyRequest {
         this.nonce = nonce;
     }
 
+    public String getUserId(){
+        return userId;
+    }
+
+    public int getNonce(){
+        return nonce;
+    }
 }

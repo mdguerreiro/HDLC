@@ -52,7 +52,7 @@ public class SignatureService {
         return data;
     }
 
-    private PublicKey getPublicKeyFromKeystore(String username) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
+    public PublicKey getPublicKeyFromKeystore(String username) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
         String keyAlias = username + "keyStore";
         String keyStoreLocation = "keys/" + username + "_key_store.p12";
 
