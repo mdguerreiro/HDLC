@@ -1,10 +1,11 @@
 package org.acme.getting.started;
 
+import org.acme.getting.started.SessionKeyRequest;
 
 
 public class SignedSessionKeyRequest {
 
-    public SessionKeyRequest sessionRequest;
+    public SessionKeyRequest sessionKeyRequest;
     public byte[] signature;
 
     public SignedSessionKeyRequest(){
@@ -12,7 +13,7 @@ public class SignedSessionKeyRequest {
     }
 
     public SignedSessionKeyRequest(SessionKeyRequest sessionKeyRequest, byte[] signature){
-        this.sessionKeyRequest = sessionRequest;
+        this.sessionKeyRequest = sessionKeyRequest;
         this.signature = signature;
     }
 

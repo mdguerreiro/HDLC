@@ -29,7 +29,7 @@ public class SignatureService {
     final String keyStorePassword = "changeit";
     Util util = new Util();
 
-    private static byte[] serialize(Object obj) throws IOException {
+    public static byte[] serialize(Object obj) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
