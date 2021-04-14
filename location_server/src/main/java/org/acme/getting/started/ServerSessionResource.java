@@ -13,6 +13,13 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
 
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.BadPaddingException;
+
+import java.security.*;
+
+
 @Path("/session")
 public class ServerSessionResource {
 
@@ -22,7 +29,7 @@ public class ServerSessionResource {
     @POST
     //@Produces(MediaType.TEXT_PLAIN)
     @Path("/")
-    public CipheredSessionKeyResponse submitSignedSessionKeyRequest(SignedSessionKeyRequest sskr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
+    public CipheredSessionKeyResponse submitSignedSessionKeyRequest(SignedSessionKeyRequest sskr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, UnrecoverableKeyException,BadPaddingException {
         return service.handleSignedSessionKeyRequest(sskr);
     }
 

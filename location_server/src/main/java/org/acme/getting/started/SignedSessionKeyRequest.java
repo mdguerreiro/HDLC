@@ -1,7 +1,7 @@
 package org.acme.getting.started;
 
 import org.acme.getting.started.SessionKeyRequest;
-
+import org.apache.commons.codec.binary.Base64;
 
 public class SignedSessionKeyRequest {
 
@@ -27,9 +27,9 @@ public class SignedSessionKeyRequest {
 
 
     public String toString(){
-        String signatureString = new String(signature);
-        String nonceString = Integer.toString(sessionKeyRequest.getNonce());
+        String signatureString = "signature base64 str - {" + new String( Base64.encodeBase64(signature) )+ "}";
+
+        String nonceString = "{number used once - " + Integer.toString(sessionKeyRequest.getNonce()) + "}";
         return sessionKeyRequest.getUserId() +"\n"+nonceString +  "\n" + signatureString;
     }
-
 }

@@ -10,18 +10,16 @@ import java.io.InputStream;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.spec.SecretKeySpec;
-import java.security.Key;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+
+
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.security.KeyStore;
-import java.security.Signature;
-import java.security.NoSuchAlgorithmException;
-import java.security.SignatureException;
-import java.security.InvalidKeyException;
-import java.security.KeyStoreException;
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.BadPaddingException;
 
+import java.security.*;
 
 import javax.enterprise.context.ApplicationScoped;
 
@@ -70,8 +68,29 @@ public class ServerSessionService {
         return certificate.getPublicKey();
     }
 
+    public PrivateKey getPrivateKeyFromKeystore(String username) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, UnrecoverableKeyException {
+        String keyAlias = username + "keyStore";
+        String keyStoreLocation = "keys/" + username + "_key_store.p12";
 
-    public CipheredSessionKeyResponse handleSignedSessionKeyRequest( SignedSessionKeyRequest sskr ) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException,SignatureException, InvalidKeyException{
+        InputStream keyPairAsStream = util.getFileFromResourceAsStream(keyStoreLocation);
+
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        keyStore.load(keyPairAsStream, keyStorePassword.toCharArray());
+        return (PrivateKey) keyStore.getKey(keyAlias, keyStorePassword.toCharArray());
+    }
+
+    public PrivateKey getPrivateKeyFromKeystore(String username, String keyAlias) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, UnrecoverableKeyException {
+        String keyStoreLocation = "keys/" + username + "_key_store.p12";
+
+        InputStream keyPairAsStream = util.getFileFromResourceAsStream(keyStoreLocation);
+
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        keyStore.load(keyPairAsStream, keyStorePassword.toCharArray());
+        return (PrivateKey) keyStore.getKey(keyAlias, keyStorePassword.toCharArray());
+    }
+
+
+    public CipheredSessionKeyResponse handleSignedSessionKeyRequest( SignedSessionKeyRequest sskr ) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException,SignatureException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, UnrecoverableKeyException, BadPaddingException{
 
         LOG.info("received session key request ------------------------");
         LOG.info(sskr.toString());
@@ -95,8 +114,47 @@ public class ServerSessionService {
         }
         else{
             LOG.info("Invalid Signature from - " + userId);
+            return null;
         }
-        return null;
+
+        //generate session key for the user
+        byte[] AESKeyBytes = generateAESSessionKey();
+
+        //cipher AES session key with the public key of the user
+        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, userPub);
+
+        byte[] cipheredAESKeyBytes = cipher.doFinal(AESKeyBytes);
+
+
+        //sign the ciphered session key with the private key of the server
+        PrivateKey serverPriv;
+        try {
+             serverPriv = getPrivateKeyFromKeystore("location_server", "locationServerkeyStore");
+        }
+        catch(Exception e){
+            e.printStackTrace();
+            return null;
+        }
+        Signature serverSignature = Signature.getInstance("SHA256withRSA");
+
+        try {
+            serverSignature.initSign(serverPriv);
+            serverSignature.update(cipheredAESKeyBytes);
+            byte[] serverSignatureBytes = serverSignature.sign();
+            return new CipheredSessionKeyResponse(cipheredAESKeyBytes, serverSignatureBytes);
+        }
+        catch(Exception e){
+            e.printStackTrace();
+            return null;
+        }
+
+
+
+
+
+
+
     }
 
 }
