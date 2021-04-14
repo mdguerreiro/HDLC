@@ -22,6 +22,8 @@ import java.nio.charset.StandardCharsets;
 import org.acme.getting.started.SessionKeyRequest;
 import org.acme.getting.started.SignedSessionKeyRequest;
 import org.acme.getting.started.CipheredSessionKeyResponse;
+import org.acme.getting.started.CipheredLocationReport;
+import org.acme.getting.started.LocationReport;
 
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
@@ -183,6 +185,50 @@ public class SessionService {
         }
 
        return null;
+
+    }
+
+
+    public CipheredLocationReport cipherLocationReport(Key sessionKey, LocationReport lr){
+
+        try {
+            byte[] locationReportBytes = LocationReport.toBytes(lr);
+            Cipher cipher = Cipher.getInstance("AES/EBC/PKCS5Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, sessionKey);
+
+            byte[] cipheredLocationReportBytes = cipher.doFinal();
+
+            return new CipheredLocationReport(lr.username, cipheredLocationReportBytes);
+        }
+        catch(Exception e){
+            e.printStackTrace();
+
+            return new CipheredLocationReport("error", (new String("error").getBytes() ) );
+        }
+
+    }
+
+
+    public LocationReport decipherLocationReport(Key sessionKey, CipheredLocationReport clr){
+
+        try {
+
+            Cipher cipher = Cipher.getInstance("AES/EBC/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, sessionKey);
+
+            byte[] cipheredLocationReportBytes = clr.getCipheredLocationReportBytes();
+            byte[] locationReportBytes = cipher.doFinal();
+
+            return LocationReport.fromBytes(locationReportBytes);
+        }
+
+        catch(Exception e){
+            LOG.info("Error decrypting ciphered location report");
+            e.printStackTrace();
+
+        }
+
+        return null;
 
     }
 

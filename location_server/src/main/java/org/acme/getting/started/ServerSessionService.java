@@ -42,6 +42,7 @@ public class ServerSessionService {
     final String keyStorePassword = "changeit";
     Util util = new Util();
 
+
     public byte[] generateAESSessionKey() throws NoSuchAlgorithmException {
 
         KeyGenerator keyGen = KeyGenerator.getInstance("AES");

@@ -24,11 +24,12 @@ import javax.inject.Singleton;
 public class EpochService {
     private static final Logger LOG = Logger.getLogger(EpochService.class);
     private int epoch = -1;
+    Key sessionKey = null;
 
     public EpochService(){
 
         try {
-            getServerSessionKey();
+            sessionKey = getServerSessionKey();
         }
         catch(Exception e){
             e.printStackTrace();
@@ -118,20 +119,20 @@ public class EpochService {
     }
 
 
-    private CipheredSessionKeyResponse getServerSessionKey() throws Exception{
+    private Key getServerSessionKey() throws Exception{
 
         SessionService sessionService = new SessionService();
         String my_username = System.getenv("USERNAME");
 
-        LOG.info("Getting key for user");
-        LOG.info(my_username);
+        //LOG.info("Getting key for user");
+        //LOG.info(my_username);
 
         PrivateKey userPriv = sessionService.getPrivateKeyFromKeystore(my_username);
         SessionKeyRequest skr = new SessionKeyRequest(my_username, 0);
 
         SignedSessionKeyRequest sskr = sessionService.signSessionKeyRequest(skr, userPriv);
 
-        LOG.info(sskr.toString());
+        //LOG.info(sskr.toString());
 
         SessionServerClient ssc = RestClientBuilder.newBuilder()
                 .baseUri(new URI("http://localhost:8080"))
