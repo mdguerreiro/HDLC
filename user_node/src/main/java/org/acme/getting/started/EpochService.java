@@ -3,6 +3,7 @@ package org.acme.getting.started;
 import io.quarkus.runtime.Startup;
 import org.acme.crypto.SignatureService;
 import org.acme.lifecycle.AppLifecycleBean;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.jboss.logging.Logger;
 
@@ -51,6 +52,9 @@ public class EpochService {
     @Inject
     SignatureService signatureService;
 
+    @ConfigProperty(name = "location.server.url")
+    String l_srv_url;
+
     private void request_location_proof() throws URISyntaxException {
         int epoch = get_epoch();
         String my_username = System.getenv("USERNAME");
@@ -91,7 +95,7 @@ public class EpochService {
 
                         LocationReport lr = new LocationReport(my_username, epoch, my_Loc.get_X(), my_Loc.get_Y(), replies, signatureBase64ForLocationReport);
                         LocationServerClient lsc = RestClientBuilder.newBuilder()
-                                .baseUri(new URI("http://localhost:8080"))
+                                .baseUri(new URI(l_srv_url))
                                 .build(LocationServerClient.class);
                         lsc.submitLocationReport(lr);
                     }
