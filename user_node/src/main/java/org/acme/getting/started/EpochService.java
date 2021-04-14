@@ -136,7 +136,7 @@ public class EpochService {
         SessionServerClient ssc = RestClientBuilder.newBuilder()
                 .baseUri(new URI("http://localhost:8080"))
                 .build(SessionServerClient.class);
-        String response = ssc.submitSignedSessionKeyRequest(sskr);
+        CipheredSessionKeyResponse response = ssc.submitSignedSessionKeyRequest(sskr);
 
         LOG.info("Session key request response - " + response);
 

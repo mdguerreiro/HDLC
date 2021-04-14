@@ -142,7 +142,7 @@ public class SessionService {
 
 
 
-    public Key handleCipheredSessionKeyResponse( String cskrJson ) {
+    public Key handleCipheredSessionKeyResponse( CipheredSessionKeyResponse cskr ) {
         try {
             PublicKey serverPub = getPublicKeyFromKeystore("location_server", "locationServerKeyStore");
         }
@@ -153,18 +153,6 @@ public class SessionService {
 
         try {
 
-            JSONParser parser = new JSONParser();
-            JSONObject cskrObj = (JSONObject) parser.parse(cskrJson);
-
-            String cipheredSessionKeyString = (String) cskrObj.get("cipheredAESKeyBytes");
-            byte[] cipheredSesionKeyBytes = cipheredSessionKeyString.getBytes();
-
-            String serverSignatureString = (String) cskrObj.get("serverSignature");
-            byte[] serverSignaturesBytes = serverSignatureString.getBytes();
-            LOG.info(serverSignatureString);
-
-            CipheredSessionKeyResponse cskr = new CipheredSessionKeyResponse(cipheredSesionKeyBytes, serverSignaturesBytes);
-
             boolean validSignature = verifyCipheredSessionKeyResponse(cskr);
 
             if(validSignature){
@@ -173,7 +161,6 @@ public class SessionService {
             else{
                 LOG.info("Server sent an invalid Session key response");
             }
-
 
         }
         catch(Exception e){

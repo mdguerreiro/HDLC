@@ -11,5 +11,5 @@ public interface SessionServerClient {
 
     @POST
     @Path("/")
-    String submitSignedSessionKeyRequest(SignedSessionKeyRequest sskr);
+    CipheredSessionKeyResponse submitSignedSessionKeyRequest(SignedSessionKeyRequest sskr);
 }
