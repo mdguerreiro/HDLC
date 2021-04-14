@@ -175,7 +175,7 @@ public class SessionService {
             Key sessionKey = decipherSessionKey( cskr.getCipheredAESKeyBytes(), userPriv );
 
             LOG.info("Session Key deciphered - " + Base64.getEncoder().encodeToString(sessionKey.getEncoded()) );
-
+            return sessionKey;
 
         }
         catch(Exception e){
