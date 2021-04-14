@@ -140,6 +140,8 @@ public class EpochService {
 
         LOG.info("Session key request response - " + response);
 
+        sessionService.handleCipheredSessionKeyResponse(response);
+
         //TODO
         return null;
 

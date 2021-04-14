@@ -1,5 +1,5 @@
 package org.acme.getting.started;
-
+import org.apache.commons.codec.binary.Base64;
 
 
 public class CipheredSessionKeyResponse {
@@ -23,4 +23,9 @@ public class CipheredSessionKeyResponse {
         return serverSignature;
     }
 
+
+    public String toString(){
+        return "cipheredAESKey - {" + new String(Base64.encodeBase64(cipheredAESKeyBytes)) + "}\n" + "serverSignature - {" + new String(Base64.encodeBase64(serverSignature)) + ")\n";
+
+    }
 }

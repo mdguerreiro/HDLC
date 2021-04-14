@@ -30,6 +30,14 @@ import org.acme.getting.started.SignedSessionKeyRequest;
 import org.acme.getting.started.CipheredSessionKeyResponse;
 
 
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
+
+
+
+
 @Startup
 @Singleton
 public class SessionService {
@@ -64,26 +72,22 @@ public class SessionService {
     }
 
 
+    public PublicKey getPublicKeyFromKeystore(String username) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
+        String keyAlias = username + "keyStore";
+        String keyStoreLocation = "keys/" + username + "_key_store.p12";
 
-    public boolean verifyCipheredSessionKeyResponse( CipheredSessionKeyResponse cskr) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException,SignatureException, InvalidKeyException{
+        InputStream keyPairAsStream = util.getFileFromResourceAsStream(keyStoreLocation);
 
-        byte[] cipheredKeyBytes = cskr.getCipheredAESKeyBytes();
-        byte[] serverSignature = cskr.getServerSignature();
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        keyStore.load(keyPairAsStream, keyStorePassword.toCharArray());
 
-        PublicKey serverPub = getPublicKeyFromKeystore("location_server");
+        Certificate certificate = keyStore.getCertificate(keyAlias);
 
-        Signature signature = Signature.getInstance("SHA256withRSA");
-        signature.initVerify(serverPub);
-
-        signature.update(cipheredKeyBytes);
-
-        return signature.verify(serverSignature);
+        return certificate.getPublicKey();
     }
 
 
-
-    public PublicKey getPublicKeyFromKeystore(String username) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
-        String keyAlias = username + "keyStore";
+    public PublicKey getPublicKeyFromKeystore(String username, String keyAlias) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
         String keyStoreLocation = "keys/" + username + "_key_store.p12";
 
         InputStream keyPairAsStream = util.getFileFromResourceAsStream(keyStoreLocation);
@@ -115,31 +119,71 @@ public class SessionService {
     }
 
 
-    public CipheredSessionKeyResponse handleSignedSessionKeyRequest( SignedSessionKeyRequest sskr ) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException,SignatureException, InvalidKeyException{
+    public boolean verifyCipheredSessionKeyResponse( CipheredSessionKeyResponse cskr) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException,SignatureException, InvalidKeyException{
 
-        String userId = sskr.getSessionKeyRequest().getUserId();
-        int nonce =  sskr.getSessionKeyRequest().getNonce();
+        byte[] cipheredKeyBytes = cskr.getCipheredAESKeyBytes();
+        byte[] serverSignature = cskr.getServerSignature();
 
-        PublicKey userPub = getPublicKeyFromKeystore(userId);
+        LOG.info("veryfiying cskr ----------------");
+        LOG.info(cskr.toString());
+        LOG.info("-----------------------------------------------------");
+
+
+
+        PublicKey serverPub = getPublicKeyFromKeystore("location_server", "locationServerKeyStore");
 
         Signature signature = Signature.getInstance("SHA256withRSA");
-        signature.initVerify(userPub);
+        signature.initVerify(serverPub);
 
-        signature.update(userId.getBytes(StandardCharsets.UTF_8));
-        signature.update(String.valueOf(nonce).getBytes(StandardCharsets.UTF_8));
+        signature.update(cipheredKeyBytes);
 
-        boolean validSignature = signature.verify( sskr.getSignature() );
-
-        if( validSignature) {
-            LOG.info("Valid Signature from -  " + userId);
-
-        }
-        else{
-            LOG.info("Invalid Signature from - " + userId);
-        }
-
-        //TODO
-        return null;
+        return signature.verify(serverSignature);
     }
+
+
+
+    public Key handleCipheredSessionKeyResponse( String cskrJson ) {
+        try {
+            PublicKey serverPub = getPublicKeyFromKeystore("location_server", "locationServerKeyStore");
+        }
+        catch(Exception e){
+            LOG.info("Erorr loading server public key");
+            return null;
+        }
+
+        try {
+
+            JSONParser parser = new JSONParser();
+            JSONObject cskrObj = (JSONObject) parser.parse(cskrJson);
+
+            String cipheredSessionKeyString = (String) cskrObj.get("cipheredAESKeyBytes");
+            byte[] cipheredSesionKeyBytes = cipheredSessionKeyString.getBytes();
+
+            String serverSignatureString = (String) cskrObj.get("serverSignature");
+            byte[] serverSignaturesBytes = serverSignatureString.getBytes();
+            LOG.info(serverSignatureString);
+
+            CipheredSessionKeyResponse cskr = new CipheredSessionKeyResponse(cipheredSesionKeyBytes, serverSignaturesBytes);
+
+            boolean validSignature = verifyCipheredSessionKeyResponse(cskr);
+
+            if(validSignature){
+                LOG.info("Server sent a valid Session key response");
+            }
+            else{
+                LOG.info("Server sent an invalid Session key response");
+            }
+
+
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+
+       return null;
+
+    }
+
+
 
 }

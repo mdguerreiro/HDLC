@@ -11,7 +11,6 @@ import java.io.InputStream;
 import javax.crypto.KeyGenerator;
 import javax.crypto.spec.SecretKeySpec;
 
-
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import javax.crypto.Cipher;
@@ -26,7 +25,6 @@ import javax.enterprise.context.ApplicationScoped;
 import java.io.IOException;
 
 import org.acme.utils.Util;
-
 
 import java.nio.charset.StandardCharsets;
 
@@ -92,9 +90,10 @@ public class ServerSessionService {
 
     public CipheredSessionKeyResponse handleSignedSessionKeyRequest( SignedSessionKeyRequest sskr ) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException,SignatureException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, UnrecoverableKeyException, BadPaddingException{
 
-        LOG.info("received session key request ------------------------");
-        LOG.info(sskr.toString());
-        LOG.info("ssk END -------------------------");
+        //LOG.info("received session key request ------------------------");
+        //LOG.info(sskr.toString());
+        //LOG.info("ssk END -------------------------");
+
         String userId = sskr.getSessionKeyRequest().getUserId();
         int nonce =  sskr.getSessionKeyRequest().getNonce();
 
@@ -142,18 +141,18 @@ public class ServerSessionService {
             serverSignature.initSign(serverPriv);
             serverSignature.update(cipheredAESKeyBytes);
             byte[] serverSignatureBytes = serverSignature.sign();
-            return new CipheredSessionKeyResponse(cipheredAESKeyBytes, serverSignatureBytes);
+
+            CipheredSessionKeyResponse cskr = new CipheredSessionKeyResponse(cipheredAESKeyBytes, serverSignatureBytes);
+            LOG.info("Sending cskr ----------------");
+            LOG.info(cskr.toString());
+            LOG.info("-----------------------------------------------------");
+
+            return cskr;
         }
         catch(Exception e){
             e.printStackTrace();
             return null;
         }
-
-
-
-
-
-
 
     }
 
