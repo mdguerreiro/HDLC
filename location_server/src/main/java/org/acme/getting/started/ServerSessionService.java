@@ -32,6 +32,8 @@ import org.acme.getting.started.SessionKeyRequest;
 import org.acme.getting.started.SignedSessionKeyRequest;
 import org.acme.getting.started.CipheredSessionKeyResponse;
 
+import java.util.Base64;
+
 
 @ApplicationScoped
 public class ServerSessionService {
@@ -47,6 +49,8 @@ public class ServerSessionService {
         Key key = keyGen.generateKey();
         System.out.println("Finish generating AES key");
         byte[] encoded = key.getEncoded();
+
+        LOG.info("Plain Session Key generated  - " + Base64.getEncoder().encodeToString(key.getEncoded()) );
 
         return encoded;
 

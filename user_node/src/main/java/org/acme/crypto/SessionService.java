@@ -8,20 +8,14 @@ import io.quarkus.runtime.Startup;
 
 import java.io.InputStream;
 
-import javax.crypto.KeyGenerator;
-import javax.crypto.spec.SecretKeySpec;
-
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 
-
 import java.security.*;
-
 
 import java.io.IOException;
 
 import org.acme.utils.Util;
-
 
 import java.nio.charset.StandardCharsets;
 
@@ -29,14 +23,15 @@ import org.acme.getting.started.SessionKeyRequest;
 import org.acme.getting.started.SignedSessionKeyRequest;
 import org.acme.getting.started.CipheredSessionKeyResponse;
 
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.BadPaddingException;
+import javax.crypto.KeyGenerator;
+import javax.crypto.spec.SecretKeySpec;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
-
-
-
+import java.util.Base64;
 
 @Startup
 @Singleton
@@ -141,6 +136,20 @@ public class SessionService {
     }
 
 
+    public Key decipherSessionKey(byte[] cipheredSessionKeyBytes, PrivateKey userPriv) throws InvalidKeyException, IllegalBlockSizeException, NoSuchAlgorithmException, NoSuchPaddingException, BadPaddingException{
+
+        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        cipher.init(Cipher.DECRYPT_MODE, userPriv);
+
+        //decipher the AES session key using the user's private key
+        byte[] decipheredSessionKeyBytes = cipher.doFinal(cipheredSessionKeyBytes);
+
+        Key sessionKey = new SecretKeySpec(decipheredSessionKeyBytes, 0, decipheredSessionKeyBytes.length, "AES");
+
+
+        return sessionKey;
+    }
+
 
     public Key handleCipheredSessionKeyResponse( CipheredSessionKeyResponse cskr ) {
         try {
@@ -161,6 +170,12 @@ public class SessionService {
             else{
                 LOG.info("Server sent an invalid Session key response");
             }
+
+            PrivateKey userPriv = getPrivateKeyFromKeystore(System.getenv("USERNAME"));
+            Key sessionKey = decipherSessionKey( cskr.getCipheredAESKeyBytes(), userPriv );
+
+            LOG.info("Session Key deciphered - " + Base64.getEncoder().encodeToString(sessionKey.getEncoded()) );
+
 
         }
         catch(Exception e){
