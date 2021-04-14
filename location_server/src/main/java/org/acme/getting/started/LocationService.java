@@ -11,9 +11,12 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@ApplicationScoped
+@Singleton
 public class LocationService {
     private static final Logger LOG = Logger.getLogger(LocationService.class);
     private final ConcurrentHashMap<String, ConcurrentHashMap> users;
@@ -55,6 +58,26 @@ public class LocationService {
             return "Not found";
         }
         System.out.println("DONE");
+        System.out.println(users.toString());
         return lr.username + lr.x + lr.y + lr.replies.toString();
+    }
+
+    public String get_user_at(int x, int y, int epoch) {
+        ArrayList<String> users_at_loc = new ArrayList<>();
+        LocationReport lr;
+        try{
+            Iterator it = users.entrySet().iterator();
+            while (it.hasNext()) {
+                ConcurrentHashMap.Entry pair = (ConcurrentHashMap.Entry)it.next();
+                lr = (LocationReport) users.get(pair.getKey()).get(epoch);
+                if(lr.x == x && lr.y == y){
+                    users_at_loc.add((String) pair.getKey());
+                }
+            }
+        }catch (NullPointerException e){
+            return "Not found";
+        }
+        System.out.println("DONE");
+        return users_at_loc.toString();
     }
 }
