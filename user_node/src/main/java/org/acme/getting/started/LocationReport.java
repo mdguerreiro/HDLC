@@ -8,9 +8,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.Serializable;
 
 
-public class LocationReport {
+public class LocationReport implements Serializable{
 
 
     public String username, signatureBase64;
