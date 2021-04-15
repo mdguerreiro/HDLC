@@ -186,16 +186,22 @@ public class ServerSessionService {
 
         try {
 
-            LOG.info("session key :");
-            LOG.info(sessionKey);
+            //LOG.info("DECIPHER LOCATION REPORT ---------------------------------");«
+            //LOG.info("session key :");
+            //LOG.info(sessionKey);
 
             Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
             cipher.init(Cipher.DECRYPT_MODE, sessionKey);
 
             byte[] cipheredLocationReportBytes = clr.getCipheredLocationReportBytes();
-            byte[] locationReportBytes = cipher.doFinal();
+            //LOG.info("ciphered location report bytes - " + Base64.getEncoder().encodeToString(cipheredLocationReportBytes));
+            byte[] locationReportBytes = cipher.doFinal(cipheredLocationReportBytes);
 
+            //LOG.info("deciphered location report bytes - " + Base64.getEncoder().encodeToString(locationReportBytes));
+            //LOG.info("DECIPHER LOCATION REPORT END ---------------------------------");
             return LocationReport.fromBytes(locationReportBytes);
+
+
         }
 
         catch(Exception e){

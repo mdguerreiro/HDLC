@@ -105,9 +105,15 @@ public class EpochService {
 
                         LocationReport lr = new LocationReport(my_username, epoch, my_Loc.get_X(), my_Loc.get_Y(), replies, signatureBase64);
 
+                        //LOG.info("deciphered location report bytes - " + Base64.getEncoder().encodeToString( LocationReport.toBytes(lr) ) );
+
+
                         Key sessionKey = sessionService.getSessionKey();
-                        LOG.info("Ciphering lr with session key - " + sessionKey);
+                        //LOG.info("Ciphering lr with session key - " + sessionKey);
                         CipheredLocationReport clr = sessionService.cipherLocationReport(sessionKey, lr);
+
+                        LOG.info(clr.getUsername());
+                        //LOG.info("ciphered location report bytes - " + Base64.getEncoder().encodeToString( clr.getCipheredLocationReportBytes() ) );
 
                         //sessionService.decipherLocationReport(sessionKey, clr);
 

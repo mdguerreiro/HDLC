@@ -207,7 +207,7 @@ public class SessionService {
             Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
             cipher.init(Cipher.ENCRYPT_MODE, sessionKey);
 
-            byte[] cipheredLocationReportBytes = cipher.doFinal();
+            byte[] cipheredLocationReportBytes = cipher.doFinal(locationReportBytes);
 
             return new CipheredLocationReport(lr.username, cipheredLocationReportBytes);
         }
