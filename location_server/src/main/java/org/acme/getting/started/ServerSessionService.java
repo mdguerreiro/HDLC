@@ -33,6 +33,7 @@ import org.acme.getting.started.SignedSessionKeyRequest;
 import org.acme.getting.started.CipheredSessionKeyResponse;
 
 import java.util.Base64;
+import java.util.HashMap;
 
 
 @ApplicationScoped
@@ -41,6 +42,7 @@ public class ServerSessionService {
     private static final Logger LOG = Logger.getLogger(SignatureService.class);
     final String keyStorePassword = "changeit";
     Util util = new Util();
+    private HashMap<String,Key> keyOfUser = new HashMap<String,Key>();
 
 
     public byte[] generateAESSessionKey() throws NoSuchAlgorithmException {
@@ -124,6 +126,9 @@ public class ServerSessionService {
         //generate session key for the user
         byte[] AESKeyBytes = generateAESSessionKey();
 
+        //keep the session key in a hashmap
+        setUserSessionKey(userId, AESKeyBytes);
+
         //cipher AES session key with the public key of the user
         Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         cipher.init(Cipher.ENCRYPT_MODE, userPub);
@@ -158,6 +163,14 @@ public class ServerSessionService {
             e.printStackTrace();
             return null;
         }
+
+    }
+
+    private void setUserSessionKey(String userId, byte[] sessionKeyBytes){
+
+        Key sessionKey = new SecretKeySpec(sessionKeyBytes, 0, sessionKeyBytes.length, "AES");
+        keyOfUser.put(userId, sessionKey);
+
 
     }
 
