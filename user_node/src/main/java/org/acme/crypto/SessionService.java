@@ -43,6 +43,8 @@ public class SessionService {
     final String keyStorePassword = "changeit";
     Util util = new Util();
 
+    Key sessionKey = null;
+
     public byte[] generateAESSessionKey() throws NoSuchAlgorithmException {
 
         KeyGenerator keyGen = KeyGenerator.getInstance("AES");
@@ -55,6 +57,13 @@ public class SessionService {
 
     }
 
+    public Key getSessionKey(){
+        return sessionKey;
+    }
+
+    public void setSessionKey(Key key){
+        this.sessionKey = key;
+    }
 
     public SignedSessionKeyRequest signSessionKeyRequest( SessionKeyRequest skr, PrivateKey privKey ) throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
@@ -174,13 +183,15 @@ public class SessionService {
             }
 
             PrivateKey userPriv = getPrivateKeyFromKeystore(System.getenv("USERNAME"));
-            Key sessionKey = decipherSessionKey( cskr.getCipheredAESKeyBytes(), userPriv );
+            Key key = decipherSessionKey( cskr.getCipheredAESKeyBytes(), userPriv );
 
-            LOG.info("Session Key deciphered - " + Base64.getEncoder().encodeToString(sessionKey.getEncoded()) );
-            return sessionKey;
+            LOG.info("Session Key deciphered - " + Base64.getEncoder().encodeToString(key.getEncoded()) );
+            this.sessionKey = key;
+            return key;
 
         }
         catch(Exception e){
+            LOG.info("Error handling cskr");
             e.printStackTrace();
         }
 
@@ -193,7 +204,7 @@ public class SessionService {
 
         try {
             byte[] locationReportBytes = LocationReport.toBytes(lr);
-            Cipher cipher = Cipher.getInstance("AES/EBC/PKCS5Padding");
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
             cipher.init(Cipher.ENCRYPT_MODE, sessionKey);
 
             byte[] cipheredLocationReportBytes = cipher.doFinal();
@@ -213,7 +224,7 @@ public class SessionService {
 
         try {
 
-            Cipher cipher = Cipher.getInstance("AES/EBC/PKCS5Padding");
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
             cipher.init(Cipher.DECRYPT_MODE, sessionKey);
 
             byte[] cipheredLocationReportBytes = clr.getCipheredLocationReportBytes();

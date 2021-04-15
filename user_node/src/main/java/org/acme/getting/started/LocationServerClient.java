@@ -11,5 +11,5 @@ public interface LocationServerClient {
 
     @POST
     @Path("/")
-    String submitLocationReport(LocationReport lr);
+    String submitLocationReport(CipheredLocationReport clr);
 }

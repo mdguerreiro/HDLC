@@ -24,12 +24,16 @@ import javax.inject.Singleton;
 public class EpochService {
     private static final Logger LOG = Logger.getLogger(EpochService.class);
     private int epoch = -1;
-    Key sessionKey = null;
+    public SessionService sessionService;
 
     public EpochService(){
 
         try {
-            sessionKey = getServerSessionKey();
+
+            sessionService = new SessionService();
+            getServerSessionKey();
+            LOG.info("Epoch service startup ");
+            LOG.info("Session key is - " + sessionService.getSessionKey());
         }
         catch(Exception e){
             e.printStackTrace();
@@ -100,10 +104,19 @@ public class EpochService {
                         String signatureBase64 = signatureService.generateSha256WithRSASignatureForLocationReport(my_username, epoch, my_Loc.get_X(), my_Loc.get_Y(), replies);
 
                         LocationReport lr = new LocationReport(my_username, epoch, my_Loc.get_X(), my_Loc.get_Y(), replies, signatureBase64);
+
+                        Key sessionKey = sessionService.getSessionKey();
+                        LOG.info("Ciphering lr with session key - " + sessionKey);
+                        CipheredLocationReport clr = sessionService.cipherLocationReport(sessionKey, lr);
+
+                        //sessionService.decipherLocationReport(sessionKey, clr);
+
+                        LOG.info("Submitting location report");
+
                         LocationServerClient lsc = RestClientBuilder.newBuilder()
                                 .baseUri(new URI("http://localhost:8080"))
                                 .build(LocationServerClient.class);
-                        lsc.submitLocationReport(lr);
+                        lsc.submitLocationReport(clr);
                     }
                 }
             }
@@ -118,10 +131,9 @@ public class EpochService {
         return epoch;
     }
 
-
     private Key getServerSessionKey() throws Exception{
 
-        SessionService sessionService = new SessionService();
+        //SessionService sessionService = new SessionService();
         String my_username = System.getenv("USERNAME");
 
         //LOG.info("Getting key for user");
@@ -143,8 +155,8 @@ public class EpochService {
 
         sessionService.handleCipheredSessionKeyResponse(response);
 
-        //TODO
-        return null;
+
+        return sessionService.getSessionKey();
 
     }
 

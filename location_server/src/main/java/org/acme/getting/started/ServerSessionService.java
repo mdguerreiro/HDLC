@@ -42,7 +42,7 @@ public class ServerSessionService {
     private static final Logger LOG = Logger.getLogger(SignatureService.class);
     final String keyStorePassword = "changeit";
     Util util = new Util();
-    private HashMap<String,Key> keyOfUser = new HashMap<String,Key>();
+    private static HashMap<String,Key> keyOfUser = new HashMap<String,Key>();
 
 
     public byte[] generateAESSessionKey() throws NoSuchAlgorithmException {
@@ -57,6 +57,24 @@ public class ServerSessionService {
 
         return encoded;
 
+    }
+
+    public static void setUserSessionKey(String userId, byte[] sessionKeyBytes){
+        Key sessionKey = new SecretKeySpec(sessionKeyBytes, 0, sessionKeyBytes.length, "AES");
+        keyOfUser.put(userId, sessionKey);
+
+        LOG.info("setting session key of user - " + userId);
+        LOG.info("session key of user - " + sessionKey );
+        //LOG.info("session key in the hashmap is " + getUserSessionKey(userId));
+
+    }
+
+    public static Key getUserSessionKey(String userId){
+        LOG.info("----------getusersessionkey()----------------");
+        LOG.info("getting key in the hashmap for user - " + userId);
+        LOG.info("session key in the hashmap is " + ServerSessionService.keyOfUser.get(userId));
+        LOG.info("--------------------------");
+        return keyOfUser.get(userId);
     }
 
     public PublicKey getPublicKeyFromKeystore(String username) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
@@ -135,7 +153,6 @@ public class ServerSessionService {
 
         byte[] cipheredAESKeyBytes = cipher.doFinal(AESKeyBytes);
 
-
         //sign the ciphered session key with the private key of the server
         PrivateKey serverPriv;
         try {
@@ -163,15 +180,30 @@ public class ServerSessionService {
             e.printStackTrace();
             return null;
         }
-
     }
 
-    private void setUserSessionKey(String userId, byte[] sessionKeyBytes){
+    public LocationReport decipherLocationReport(Key sessionKey, CipheredLocationReport clr){
 
-        Key sessionKey = new SecretKeySpec(sessionKeyBytes, 0, sessionKeyBytes.length, "AES");
-        keyOfUser.put(userId, sessionKey);
+        try {
 
+            LOG.info("session key :");
+            LOG.info(sessionKey);
 
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
+            cipher.init(Cipher.DECRYPT_MODE, sessionKey);
+
+            byte[] cipheredLocationReportBytes = clr.getCipheredLocationReportBytes();
+            byte[] locationReportBytes = cipher.doFinal();
+
+            return LocationReport.fromBytes(locationReportBytes);
+        }
+
+        catch(Exception e){
+            LOG.info("Error decrypting ciphered location report");
+            e.printStackTrace();
+
+        }
+        return null;
     }
 
 }
