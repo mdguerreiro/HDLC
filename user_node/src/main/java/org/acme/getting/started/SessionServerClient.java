@@ -5,11 +5,11 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
-@Path("/location")
+@Path("/session")
 @RegisterRestClient
-public interface LocationServerClient {
+public interface SessionServerClient {
 
     @POST
     @Path("/")
-    String submitLocationReport(CipheredLocationReport clr);
+    CipheredSessionKeyResponse submitSignedSessionKeyRequest(SignedSessionKeyRequest sskr);
 }
