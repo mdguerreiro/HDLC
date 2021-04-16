@@ -13,7 +13,7 @@ public interface LocationServerClient {
     @POST
     @Path("/")
     @Retry(maxRetries = 5)
-    String submitLocationReport(LocationReport lr);
+    String submitLocationReport(CipheredLocationReport clr);
 
     @POST
     @Path("/obtain")

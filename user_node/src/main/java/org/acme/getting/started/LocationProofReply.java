@@ -1,6 +1,7 @@
 package org.acme.getting.started;
+import java.io.Serializable;
 
-public class LocationProofReply {
+public class LocationProofReply implements Serializable{
 
     public String status;
     public String signer;
