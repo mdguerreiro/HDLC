@@ -38,11 +38,11 @@ public class LocationResource {
 
     }
 
-    @GET
-    @Produces(MediaType.TEXT_PLAIN)
-    @Path("/{userID}/{epoch}")
-    public String obtainLocationReport(@PathParam("userID") String userID, @PathParam("epoch") String epoch) {
+    @POST
+    @Path("/obtain")
+    public String obtainLocationReport(LocationRequest lr) {
         // @TODO: LOG INFO
+        System.out.println("RECEIVED LOCATION REQUEST");
         return service.get_location_report(lr.username, lr.epoch, lr.signatureBase64);
     }
 
