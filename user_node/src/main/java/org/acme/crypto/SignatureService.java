@@ -1,20 +1,14 @@
 package org.acme.crypto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import io.quarkus.runtime.Startup;
 
 import org.acme.getting.started.LocationProofReply;
 import org.acme.utils.Util;
-import org.apache.commons.lang3.SerializationUtils;
 import org.jboss.logging.Logger;
 
 import javax.inject.Singleton;
 import java.io.*;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
 import java.security.*;
@@ -28,29 +22,6 @@ public class SignatureService {
     private static final Logger LOG = Logger.getLogger(SignatureService.class);
     final String keyStorePassword = "changeit";
     Util util = new Util();
-
-    private static byte[] serialize(Object obj) throws IOException {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.enable(SerializationFeature.INDENT_OUTPUT);
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        mapper.writeValue(os, obj);
-
-        return os.toByteArray();
-    }
-
-    private static byte[][] convertLocationProofRepliesArrayToBytes(ArrayList<LocationProofReply> replies) throws IOException, NoSuchAlgorithmException {
-        byte[][] data = new byte[replies.size()][];
-        for (int i = 0; i < replies.size(); i++) {
-            LocationProofReply locationProofReply = replies.get(i);
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            byte[] serializable = serialize(locationProofReply);
-            byte[] digest = md5.digest(serializable);
-            data[i] = digest;
-        }
-
-        return data;
-    }
 
     private PublicKey getPublicKeyFromKeystore(String username) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
         String keyAlias = username + "keyStore";
@@ -77,7 +48,7 @@ public class SignatureService {
         return (PrivateKey) keyStore.getKey(keyAlias, keyStorePassword.toCharArray());
     }
 
-    public boolean verifySha256WithRSASignatureForLocationReply(String username, int xLoc, int yLoc, byte[] receivedSignature) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException {
+    public boolean verifySha256WithRSASignatureForLocationReply(String username, int xLoc, int yLoc, String receivedSignatureBase64) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException {
         LOG.info(String.format("Validating Sha256 with RSA Signature for LocationReply"));
 
         PublicKey publicKey = getPublicKeyFromKeystore(username);
@@ -88,6 +59,7 @@ public class SignatureService {
         signature.update(String.valueOf(xLoc).getBytes(StandardCharsets.UTF_8));
         signature.update(String.valueOf(yLoc).getBytes(StandardCharsets.UTF_8));
 
+        byte[] receivedSignature = org.apache.commons.codec.binary.Base64.decodeBase64(receivedSignatureBase64);
         boolean isValidSignature = signature.verify(receivedSignature);
 
         if(isValidSignature) {
@@ -99,7 +71,7 @@ public class SignatureService {
         return isValidSignature;
     }
 
-    public boolean verifySha256WithRSASignatureForLocationRequest(String status, String username, byte[] receivedSignature) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException {
+    public boolean verifySha256WithRSASignatureForLocationRequest(String status, String username, String receivedSignatureBase64) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException {
         LOG.info(String.format("Validating Sha256 with RSA Signature for LocationRequest"));
 
         PublicKey publicKey = getPublicKeyFromKeystore(username);
@@ -109,6 +81,7 @@ public class SignatureService {
         signature.update(username.getBytes(StandardCharsets.UTF_8));
         signature.update(String.valueOf(status).getBytes(StandardCharsets.UTF_8));
 
+        byte[] receivedSignature = org.apache.commons.codec.binary.Base64.decodeBase64(receivedSignatureBase64);
         boolean isValidSignature = signature.verify(receivedSignature);
 
         if(isValidSignature) {
@@ -120,7 +93,7 @@ public class SignatureService {
         return isValidSignature;
     }
 
-    public byte[] generateSha256WithRSASignatureForLocationRequest(String username, int xLoc, int yLoc) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, IOException, CertificateException, InvalidKeyException, SignatureException {
+    public String generateSha256WithRSASignatureForLocationRequest(String username, int xLoc, int yLoc) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, IOException, CertificateException, InvalidKeyException, SignatureException {
         LOG.info(String.format("Generating Sha256 with RSA Signature for LocationRequest"));
         LOG.info(String.format("%s process coordinates -> X = %d, Y= %d", username, xLoc,
                 yLoc));
@@ -133,7 +106,9 @@ public class SignatureService {
         signature.update(String.valueOf(xLoc).getBytes(StandardCharsets.UTF_8));
         signature.update(String.valueOf(yLoc).getBytes(StandardCharsets.UTF_8));
 
-        return signature.sign();
+        byte[] signatureByteArray = signature.sign();
+
+        return Base64.getEncoder().encodeToString(signatureByteArray);
     }
 
     public String generateSha256WithRSASignatureForLocationReport(String username, int epoch, int xLoc, int yLoc, ArrayList<LocationProofReply> replies) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, IOException, CertificateException, InvalidKeyException, SignatureException {
@@ -144,20 +119,16 @@ public class SignatureService {
         signature.initSign(privateKey);
 
         signature.update(username.getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(epoch).getBytes(StandardCharsets.UTF_8));
         signature.update(String.valueOf(xLoc).getBytes(StandardCharsets.UTF_8));
         signature.update(String.valueOf(yLoc).getBytes(StandardCharsets.UTF_8));
 
-        byte[][] repliesByteArray = convertLocationProofRepliesArrayToBytes(replies);
-
-        for(int i = 0; i < repliesByteArray.length; i++) {
-            signature.update(repliesByteArray[i]);
-        }
-
         byte[] signatureByteArray = signature.sign();
+
         return Base64.getEncoder().encodeToString(signatureByteArray);
     }
 
-    public byte[] generateSha256WithRSASignatureForLocationReply(String username, String status) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, IOException, CertificateException, InvalidKeyException, SignatureException {
+    public String generateSha256WithRSASignatureForLocationReply(String username, String status) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, IOException, CertificateException, InvalidKeyException, SignatureException {
         LOG.info(String.format("Generating Sha256 with RSA Signature for LocationReply"));
         LOG.info(String.format("%s Location Reply status -> %s", username, status));
 
@@ -168,9 +139,8 @@ public class SignatureService {
         signature.update(username.getBytes(StandardCharsets.UTF_8));
         signature.update(String.valueOf(status).getBytes(StandardCharsets.UTF_8));
 
-        return signature.sign();
+        byte[] signatureByteArray = signature.sign();
+
+        return Base64.getEncoder().encodeToString(signatureByteArray);
     }
 }
-
-//        String base64DigitalSignature = Base64.getEncoder().encodeToString(digitalSignature);
-//        System.out.println("Base64: " + base64DigitalSignature);
