@@ -58,7 +58,7 @@ public class LocationService {
         return "Failed";
     }
 
-    public String get_location_report(String username, int epoch) {
+    public String get_location_report(String username, int epoch, String signatureBase64) {
         System.out.println("USERNAME " + username);
         System.out.println("EPOCH " + epoch);
         LocationReport lr;
@@ -69,7 +69,7 @@ public class LocationService {
         }
         System.out.println("DONE");
         System.out.println(users.toString());
-        return lr.username + lr.x + lr.y + lr.replies.toString();
+        return String.format("User %s was at location x:%s y:%s", lr.username, lr.x, lr.y);
     }
 
     public String get_user_at(int x, int y, int epoch) {

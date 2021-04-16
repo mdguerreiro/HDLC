@@ -28,7 +28,8 @@ public class AppLifecycleBean {
     public static final String USERS_PATH = "classes/json/users.json";
     public static final String GRID_PATH = "classes/json/grid.json";
 
-    void onStart(@Observes StartupEvent ev) {
+    void onStart(@Observes StartupEvent ev) throws InterruptedException {
+        Thread.sleep(10000);
         LOGGER.info("The application is starting...");
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
         LOGGER.info("Loading users/hosts info file...");
@@ -88,6 +89,6 @@ public class AppLifecycleBean {
 
     public static boolean is_Close(Location l1, Location l2){
         //@TODO -> Improve distance function
-        return (Math.abs(l2.get_X()-l1.get_X()) <= 1 && Math.abs(l2.get_Y()-l1.get_Y()) <= 1);
+        return (Math.abs(l2.get_X()-l1.get_X()) <= 3 && Math.abs(l2.get_Y()-l1.get_Y()) <= 3);
     }
 }

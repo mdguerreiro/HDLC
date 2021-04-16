@@ -14,4 +14,8 @@ public interface LocationServerClient {
     @Path("/")
     @Retry(maxRetries = 5)
     String submitLocationReport(LocationReport lr);
+
+    @POST
+    @Path("/obtain")
+    String obtainLocationReport(LocationRequest lr);
 }
