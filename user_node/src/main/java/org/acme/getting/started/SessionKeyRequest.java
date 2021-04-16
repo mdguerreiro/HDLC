@@ -1,12 +1,16 @@
 package org.acme.getting.started;
 
 
+import java.io.Serializable;
 
-
-public class SessionKeyRequest {
+public class SessionKeyRequest implements Serializable {
 
     public String userId;
     public int nonce;
+
+    public SessionKeyRequest(){
+
+    }
 
     public SessionKeyRequest(String userId, int nonce){
         this.userId = userId;

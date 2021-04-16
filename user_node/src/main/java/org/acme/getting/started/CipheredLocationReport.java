@@ -1,8 +1,8 @@
 package org.acme.getting.started;
 
-import java.util.ArrayList;
+import java.io.Serializable;
 
-public class CipheredLocationReport {
+public class CipheredLocationReport implements Serializable {
 
     public String username;
     public byte[] cipheredLocationReportBytes;
