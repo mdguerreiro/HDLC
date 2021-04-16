@@ -43,6 +43,7 @@ public class ServerSessionService {
     final String keyStorePassword = "changeit";
     Util util = new Util();
     private static HashMap<String,Key> keyOfUser = new HashMap<String,Key>();
+    private static HashMap<String,HashMap> usedNoncesOfUser = new HashMap<String,HashMap>();
 
 
     public byte[] generateAESSessionKey() throws NoSuchAlgorithmException {
@@ -113,6 +114,7 @@ public class ServerSessionService {
     }
 
 
+
     public CipheredSessionKeyResponse handleSignedSessionKeyRequest( SignedSessionKeyRequest sskr ) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException,SignatureException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, UnrecoverableKeyException, BadPaddingException{
 
         //LOG.info("received session key request ------------------------");
@@ -140,6 +142,12 @@ public class ServerSessionService {
             LOG.info("Invalid Signature from - " + userId);
             return null;
         }
+
+
+        Integer nonc = new Integer(nonce);
+        boolean isValidNonce = isValidRequestNonce(userId, nonc);
+        LOG.info("Nonce - " + nonc.toString() + " is valid:" );
+        LOG.info(isValidNonce);
 
         //generate session key for the user
         byte[] AESKeyBytes = generateAESSessionKey();
@@ -201,7 +209,6 @@ public class ServerSessionService {
             //LOG.info("DECIPHER LOCATION REPORT END ---------------------------------");
             return LocationReport.fromBytes(locationReportBytes);
 
-
         }
 
         catch(Exception e){
@@ -212,4 +219,24 @@ public class ServerSessionService {
         return null;
     }
 
+    public boolean isValidRequestNonce(String userId, Integer nonce) {
+
+        Boolean b = new Boolean(true);
+
+        HashMap<Integer, Boolean> usedNoncesMap = usedNoncesOfUser.get(userId);
+
+        if ( usedNoncesMap == null ){
+            usedNoncesOfUser.put(userId, new HashMap<Integer, Boolean>());
+            usedNoncesOfUser.get(userId).put(nonce, b);
+
+            return true;
+        }
+
+        if( !usedNoncesMap.containsKey(nonce) ){
+            usedNoncesMap.put(nonce, b);
+            return true;
+        }
+
+        return false;
+    }
 }

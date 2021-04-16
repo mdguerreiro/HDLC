@@ -25,6 +25,8 @@ public class EpochService {
     private static final Logger LOG = Logger.getLogger(EpochService.class);
     private int epoch = -1;
     public SessionService sessionService;
+    Random ran = new Random();
+
 
     public EpochService(){
 
@@ -146,7 +148,7 @@ public class EpochService {
         //LOG.info(my_username);
 
         PrivateKey userPriv = sessionService.getPrivateKeyFromKeystore(my_username);
-        SessionKeyRequest skr = new SessionKeyRequest(my_username, 0);
+        SessionKeyRequest skr = new SessionKeyRequest(my_username, ran.nextInt());
 
         SignedSessionKeyRequest sskr = sessionService.signSessionKeyRequest(skr, userPriv);
 
