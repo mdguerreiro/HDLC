@@ -7,6 +7,9 @@ public class CipheredLocationReport {
     public String username;
     public byte[] cipheredLocationReportBytes;
 
+    public CipheredLocationReport(){
+
+    }
     public CipheredLocationReport( String username, byte[] cipheredLocationReportBytes){
         this.username = username;
         this.cipheredLocationReportBytes = cipheredLocationReportBytes;
