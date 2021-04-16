@@ -38,6 +38,7 @@ public class EpochService {
 
             sessionService = new SessionService();
             getServerSessionKey();
+            printSessionKey(sessionService.getSessionKey());
             LOG.info("Epoch service startup ");
             LOG.info("Session key is - " + sessionService.getSessionKey());
         }
@@ -124,6 +125,7 @@ public class EpochService {
 
 
                         Key sessionKey = sessionService.getSessionKey();
+                        printSessionKey(sessionKey);
                         //LOG.info("Ciphering lr with session key - " + sessionKey);
                         CipheredLocationReport clr = sessionService.cipherLocationReport(sessionKey, lr);
 
@@ -178,6 +180,11 @@ public class EpochService {
 
         return sessionService.getSessionKey();
 
+    }
+
+
+    private void printSessionKey(Key key){
+        LOG.info("SESSION key - " + Base64.getEncoder().encodeToString(key.getEncoded()) );
     }
 
 

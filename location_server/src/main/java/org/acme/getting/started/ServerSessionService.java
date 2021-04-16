@@ -51,10 +51,10 @@ public class ServerSessionService {
         KeyGenerator keyGen = KeyGenerator.getInstance("AES");
         keyGen.init(128);
         Key key = keyGen.generateKey();
-        System.out.println("Finish generating AES key");
+        //System.out.println("Finish generating AES key");
         byte[] encoded = key.getEncoded();
 
-        LOG.info("Plain Session Key generated  - " + Base64.getEncoder().encodeToString(key.getEncoded()) );
+        //LOG.info("Plain Session Key generated  - " + Base64.getEncoder().encodeToString(key.getEncoded()) );
 
         return encoded;
 
@@ -64,17 +64,23 @@ public class ServerSessionService {
         Key sessionKey = new SecretKeySpec(sessionKeyBytes, 0, sessionKeyBytes.length, "AES");
         keyOfUser.put(userId, sessionKey);
 
+        LOG.info("\n");
+        LOG.info("setUserssionKey -------------------------");
         LOG.info("setting session key of user - " + userId);
-        LOG.info("session key of user - " + sessionKey );
-        //LOG.info("session key in the hashmap is " + getUserSessionKey(userId));
+        LOG.info("session key of user - " + Base64.getEncoder().encodeToString(sessionKey.getEncoded()) );
+        LOG.info("session key in the hashmap is " + getUserSessionKey(userId));
+        LOG.info("setUserssionKey END -------------------------");
+        LOG.info("\n");
 
     }
 
     public static Key getUserSessionKey(String userId){
+        LOG.info("\n");
         LOG.info("----------getusersessionkey()----------------");
         LOG.info("getting key in the hashmap for user - " + userId);
         LOG.info("session key in the hashmap is " + ServerSessionService.keyOfUser.get(userId));
         LOG.info("--------------------------");
+        LOG.info("\n");
         return keyOfUser.get(userId);
     }
 
@@ -178,9 +184,9 @@ public class ServerSessionService {
             byte[] serverSignatureBytes = serverSignature.sign();
 
             CipheredSessionKeyResponse cskr = new CipheredSessionKeyResponse(cipheredAESKeyBytes, serverSignatureBytes);
-            LOG.info("Sending cskr ----------------");
-            LOG.info(cskr.toString());
-            LOG.info("-----------------------------------------------------");
+            //LOG.info("Sending cskr ----------------");
+            //LOG.info(cskr.toString());
+            //LOG.info("-----------------------------------------------------");
 
             return cskr;
         }
