@@ -1,8 +1,9 @@
 package org.acme.getting.started;
 
 
+import java.io.Serializable;
 
-public class LocationProofRequest {
+public class LocationProofRequest implements Serializable {
 
     public String username;
     public int xLoc, yLoc;

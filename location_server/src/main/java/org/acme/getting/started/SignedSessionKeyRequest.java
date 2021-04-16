@@ -3,7 +3,9 @@ package org.acme.getting.started;
 import org.acme.getting.started.SessionKeyRequest;
 import org.apache.commons.codec.binary.Base64;
 
-public class SignedSessionKeyRequest {
+import java.io.Serializable;
+
+public class SignedSessionKeyRequest implements Serializable {
 
     public SessionKeyRequest sessionKeyRequest;
     public byte[] signature;
