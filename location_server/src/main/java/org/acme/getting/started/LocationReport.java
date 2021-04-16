@@ -14,6 +14,8 @@ import java.io.Serializable;
 public class LocationReport implements Serializable{
 
 
+    private static final long serialVersionUID = 1;
+
     public String username, signatureBase64;
     public int x, y, epoch;
     public ArrayList<LocationProofReply> replies;
