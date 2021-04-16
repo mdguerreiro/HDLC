@@ -30,22 +30,32 @@ public class LocationService {
 
     public String submit_location_report(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
         ConcurrentHashMap<Integer, LocationReport> location_reports = new ConcurrentHashMap<>();
-        System.out.println("SAVING");
-        System.out.println("EPOCH " + lr.epoch);
-        System.out.println("USERNAME " + lr.username);
-        System.out.println("BASE64  " + lr.signatureBase64);
-
+        LOG.info(String.format("Received location report submission from %s at epoch %d - checking validity", lr.username, lr.epoch));
+        int f = Integer.parseInt(System.getenv("BYZANTINE_USERS"));
         boolean isSignatureCorrect = signatureService.verifySha256WithRSASignature(lr.username, lr.epoch, lr.x, lr.y, lr.replies, lr.signatureBase64);
 
         if(!isSignatureCorrect) {
             LOG.info("Signature Validation Failed. Aborting");
             return "Failed";
         }
-
-        location_reports.put(lr.epoch, lr);
-        users.put(lr.username, location_reports);
-
-        return "Submitted";
+        ArrayList<LocationProofReply> replies = lr.replies;
+        int counter = 0;
+        for(LocationProofReply reply : replies){
+            if(reply.status.equals("APPROVED")){
+                counter++;
+            }
+        }
+        LOG.info("Number of approved " + counter);
+        if(counter >= ((3 * f + 1) - f)){
+            LOG.info("There is byzantine consensus, request was approved.");
+            location_reports.put(lr.epoch, lr);
+            users.put(lr.username, location_reports);
+            return "Submitted";
+        }
+        else{
+            LOG.info("There isn't byzantine consensus, request was denied.");
+        }
+        return "Failed";
     }
 
     public String get_location_report(String username, int epoch) {

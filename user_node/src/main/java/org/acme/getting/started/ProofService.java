@@ -29,6 +29,7 @@ public class ProofService {
         String my_username = System.getenv("USERNAME");
         String status = "DENIED";
         String signatureBase64;
+        String isByzantine = System.getenv("isByzantine");
         try {
             boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForLocationReply(lpr.username, lpr.xLoc, lpr.yLoc, lpr.signatureBase64);
 
@@ -51,6 +52,9 @@ public class ProofService {
             }
             LOG.info("Location confirmed. Sending LP Reply to " + lpr.username);
             status = "APPROVED";
+            if(isByzantine.equals("true")){
+                status = "DENIED";
+            }
             signatureBase64 = signatureService.generateSha256WithRSASignatureForLocationReply(my_username, status);
             return new LocationProofReply(status, my_username, signatureBase64);
         } catch (NoSuchAlgorithmException | KeyStoreException | IOException | InvalidKeyException | CertificateException | SignatureException | UnrecoverableKeyException e) {

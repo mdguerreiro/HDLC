@@ -30,10 +30,16 @@ public class EpochService {
             public void run() {
                 LOG.info("Clock tick: epoch updated");
                 epoch++;
-                if(epoch == 5)
+                if(epoch == 5) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
                     System.exit(1);
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(2000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -45,7 +51,7 @@ public class EpochService {
             }
         };
         Timer timer = new Timer("Timer");
-        timer.scheduleAtFixedRate(repeatedTask, 0, 6000);
+        timer.scheduleAtFixedRate(repeatedTask, 0, 15000);
 
     }
 
