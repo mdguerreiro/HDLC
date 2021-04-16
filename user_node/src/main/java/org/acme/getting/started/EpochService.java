@@ -33,11 +33,11 @@ public class EpochService {
                 if(epoch == 5) {
                     try {
                         Thread.sleep(1000);
+                        System.exit(1);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
-                    System.exit(1);
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
@@ -87,7 +87,14 @@ public class EpochService {
                                 .baseUri(new URI(hostname))
                                 .build(ProofResourceClient.class);
 
-                        LocationProofReply lp_reply = prc.proof_request(lpr);
+                        LocationProofReply lp_reply = null;
+                        try{
+                            lp_reply = prc.proof_request(lpr);
+                        }
+                        catch(Exception e){
+                            LOG.error(String.format("Couldn't connect to node %s to perform request. Check if it is online", hostname));
+                            break;
+                        }
 
                         boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForLocationRequest(lp_reply.status, lp_reply.signer, lp_reply.signatureBase64);
 

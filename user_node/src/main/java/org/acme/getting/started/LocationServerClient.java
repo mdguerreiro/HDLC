@@ -1,5 +1,6 @@
 package org.acme.getting.started;
 
+import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import javax.ws.rs.POST;
@@ -11,5 +12,6 @@ public interface LocationServerClient {
 
     @POST
     @Path("/")
+    @Retry(maxRetries = 5)
     String submitLocationReport(LocationReport lr);
 }
