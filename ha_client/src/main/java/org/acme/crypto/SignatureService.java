@@ -15,6 +15,9 @@ import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Base64;
 
+import org.acme.getting.started.LocationProofReply;
+
+
 @Startup
 @Singleton
 public class SignatureService {
