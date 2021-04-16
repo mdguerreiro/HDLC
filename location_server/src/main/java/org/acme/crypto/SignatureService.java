@@ -1,14 +1,10 @@
 package org.acme.crypto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import io.quarkus.runtime.Startup;
 
 import org.acme.getting.started.LocationProofReply;
 import org.acme.utils.Util;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang3.SerializationUtils;
 import org.jboss.logging.Logger;
 
 import javax.inject.Singleton;
@@ -26,30 +22,6 @@ public class SignatureService {
     private static final Logger LOG = Logger.getLogger(SignatureService.class);
     final String keyStorePassword = "changeit";
     Util util = new Util();
-
-
-    private static byte[] serialize(Object obj) throws IOException {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.enable(SerializationFeature.INDENT_OUTPUT);
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        mapper.writeValue(os, obj);
-
-        return os.toByteArray();
-    }
-
-    private static byte[][] convertLocationProofRepliesArrayToBytes(ArrayList<LocationProofReply> replies) throws IOException, NoSuchAlgorithmException {
-        byte[][] data = new byte[replies.size()][];
-        for (int i = 0; i < replies.size(); i++) {
-            LocationProofReply locationProofReply = replies.get(i);
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            byte[] serializable = serialize(locationProofReply);
-            byte[] digest = md5.digest(serializable);
-            data[i] = digest;
-        }
-
-        return data;
-    }
 
     private PublicKey getPublicKeyFromKeystore(String username) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
         String keyAlias = username + "keyStore";
@@ -85,14 +57,9 @@ public class SignatureService {
         signature.initVerify(publicKey);
 
         signature.update(username.getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(epoch).getBytes(StandardCharsets.UTF_8));
         signature.update(String.valueOf(xLoc).getBytes(StandardCharsets.UTF_8));
         signature.update(String.valueOf(yLoc).getBytes(StandardCharsets.UTF_8));
-
-        byte[][] repliesByteArray = convertLocationProofRepliesArrayToBytes(replies);
-
-        for(int i = 0; i < repliesByteArray.length; i++) {
-            signature.update(repliesByteArray[i]);
-        }
 
         byte[] receivedSignature = Base64.decodeBase64(receivedSignatureBase64);
         boolean isValidSignature = signature.verify(receivedSignature);
@@ -120,6 +87,3 @@ public class SignatureService {
         return signature.sign();
     }
 }
-
-//        String base64DigitalSignature = Base64.getEncoder().encodeToString(digitalSignature);
-//        System.out.println("Base64: " + base64DigitalSignature);

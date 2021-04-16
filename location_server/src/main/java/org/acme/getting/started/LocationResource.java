@@ -56,4 +56,12 @@ public class LocationResource {
         // @TODO: LOG INFO
         return service.get_location_report(userID, Integer.parseInt(epoch));
     }
+
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    @Path("/{x}/{y}/{epoch}")
+    public String obtainUsersAtLocation(@PathParam("x") String x, @PathParam("y") String y, @PathParam("epoch") String epoch) {
+        // @TODO: LOG INFO
+        return service.get_user_at(Integer.parseInt(x), Integer.parseInt(y), Integer.parseInt(epoch));
+    }
 }

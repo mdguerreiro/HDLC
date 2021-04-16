@@ -29,7 +29,7 @@ public class SignatureService {
     final String keyStorePassword = "changeit";
     Util util = new Util();
 
-    public static byte[] serialize(Object obj) throws IOException {
+    private static byte[] serialize(Object obj) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
@@ -52,7 +52,7 @@ public class SignatureService {
         return data;
     }
 
-    public PublicKey getPublicKeyFromKeystore(String username) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
+    private PublicKey getPublicKeyFromKeystore(String username) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
         String keyAlias = username + "keyStore";
         String keyStoreLocation = "keys/" + username + "_key_store.p12";
 
