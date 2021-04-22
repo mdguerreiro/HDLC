@@ -1,6 +1,8 @@
 package org.acme.getting.started;
 
-public class LocationRequest {
+import java.io.Serializable;
+
+public class LocationRequest implements Serializable {
 
     public String username;
     public int epoch;

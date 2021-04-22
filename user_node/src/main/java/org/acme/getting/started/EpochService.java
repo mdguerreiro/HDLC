@@ -62,7 +62,7 @@ public class EpochService {
             }
         };
         Timer timer = new Timer("Timer");
-        timer.scheduleAtFixedRate(repeatedTask, 0, 30000);
+        timer.scheduleAtFixedRate(repeatedTask, 0, 10000);
 
     }
 
