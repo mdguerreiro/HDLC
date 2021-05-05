@@ -1,7 +1,12 @@
 package org.acme.getting.started;
 
 import io.quarkus.runtime.Startup;
+import org.acme.crypto.CryptoKeysUtil;
 import org.acme.crypto.SignatureService;
+import org.acme.getting.started.model.*;
+import org.acme.getting.started.resource.LocationServerClient;
+import org.acme.getting.started.resource.ProofResourceClient;
+import org.acme.getting.started.resource.SessionServerClient;
 import org.acme.lifecycle.AppLifecycleBean;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.jboss.logging.Logger;
@@ -159,7 +164,7 @@ public class EpochService {
         //LOG.info("Getting key for user");
         //LOG.info(my_username);
 
-        PrivateKey userPriv = sessionService.getPrivateKeyFromKeystore(my_username);
+        PrivateKey userPriv = CryptoKeysUtil.getPrivateKeyFromKeystore(my_username);
         SessionKeyRequest skr = new SessionKeyRequest(my_username, ran.nextInt());
 
         SignedSessionKeyRequest sskr = sessionService.signSessionKeyRequest(skr, userPriv);

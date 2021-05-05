@@ -1,4 +1,4 @@
-package org.acme.getting.started;
+package org.acme.getting.started.model;
 
 public class Location {
     private int x;
