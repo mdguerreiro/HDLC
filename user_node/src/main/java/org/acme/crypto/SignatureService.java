@@ -14,8 +14,6 @@ import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Base64;
 
-import static org.acme.crypto.CryptoKeysUtil.getPrivateKeyFromKeystore;
-import static org.acme.crypto.CryptoKeysUtil.getPublicKeyFromKeystore;
 
 @Startup
 @Singleton
@@ -25,7 +23,7 @@ public class SignatureService {
     public boolean verifySha256WithRSASignatureForLocationReply(String username, int xLoc, int yLoc, String receivedSignatureBase64) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException {
         LOG.info(String.format("Validating Sha256 with RSA Signature for LocationReply"));
 
-        PublicKey publicKey = getPublicKeyFromKeystore(username);
+        PublicKey publicKey = CryptoKeysUtil.getPublicKeyFromKeystore(username);
 
         Signature signature = Signature.getInstance("SHA256withRSA");
         signature.initVerify(publicKey);
@@ -48,7 +46,7 @@ public class SignatureService {
     public boolean verifySha256WithRSASignatureForLocationRequest(String status, String username, String receivedSignatureBase64) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException {
         LOG.info(String.format("Validating Sha256 with RSA Signature for LocationRequest"));
 
-        PublicKey publicKey = getPublicKeyFromKeystore(username);
+        PublicKey publicKey = CryptoKeysUtil.getPublicKeyFromKeystore(username);
 
         Signature signature = Signature.getInstance("SHA256withRSA");
         signature.initVerify(publicKey);
@@ -72,7 +70,7 @@ public class SignatureService {
         LOG.info(String.format("%s process coordinates -> X = %d, Y= %d", username, xLoc,
                 yLoc));
 
-        PrivateKey privateKey = getPrivateKeyFromKeystore(username);
+        PrivateKey privateKey = CryptoKeysUtil.getPrivateKeyFromKeystore(username);
         Signature signature = Signature.getInstance("SHA256withRSA");
         signature.initSign(privateKey);
 
@@ -88,7 +86,7 @@ public class SignatureService {
     public String generateSha256WithRSASignatureForLocationReport(String username, int epoch, int xLoc, int yLoc, ArrayList<LocationProofReply> replies) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, IOException, CertificateException, InvalidKeyException, SignatureException {
         LOG.info(String.format("Generating Sha256 with RSA Signature for LocationReport"));
 
-        PrivateKey privateKey = getPrivateKeyFromKeystore(username);
+        PrivateKey privateKey = CryptoKeysUtil.getPrivateKeyFromKeystore(username);
         Signature signature = Signature.getInstance("SHA256withRSA");
         signature.initSign(privateKey);
 
@@ -106,7 +104,7 @@ public class SignatureService {
         LOG.info(String.format("Generating Sha256 with RSA Signature for LocationReply"));
         LOG.info(String.format("%s Location Reply status -> %s", username, status));
 
-        PrivateKey privateKey = getPrivateKeyFromKeystore(username);
+        PrivateKey privateKey = CryptoKeysUtil.getPrivateKeyFromKeystore(username);
         Signature signature = Signature.getInstance("SHA256withRSA");
         signature.initSign(privateKey);
 

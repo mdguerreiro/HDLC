@@ -99,7 +99,7 @@ public class ServerSessionService {
         //sign the ciphered session key with the private key of the server
         PrivateKey serverPriv;
         try {
-             serverPriv = CryptoKeysUtil.getPrivateKeyFromKeystore("location_server", "locationServerkeyStore");
+             serverPriv = CryptoKeysUtil.getPrivateKeyFromKeystore("location_server");
         }
         catch(Exception e){
             e.printStackTrace();

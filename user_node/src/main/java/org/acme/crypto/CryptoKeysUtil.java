@@ -13,7 +13,6 @@ import java.util.Base64;
 
 public class CryptoKeysUtil {
     private static final Logger LOG = Logger.getLogger(CryptoKeysUtil.class);
-    private static final String keyStorePassword = "changeit";
 
     static public byte[] generateAESSessionKey() throws NoSuchAlgorithmException {
 
@@ -29,22 +28,10 @@ public class CryptoKeysUtil {
 
     }
 
-    public static PublicKey getPublicKeyFromKeystore(String username, String keyAlias) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
-        String keyStoreLocation = "keys/" + username + "_key_store.p12";
-
-        InputStream keyPairAsStream = Util.getFileFromResourceAsStream(keyStoreLocation);
-
-        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(keyPairAsStream, keyStorePassword.toCharArray());
-
-        Certificate certificate = keyStore.getCertificate(keyAlias);
-
-        return certificate.getPublicKey();
-    }
-
     public static PublicKey getPublicKeyFromKeystore(String username) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
-        String keyAlias = username + "keyStore";
+        String keyAlias = username + "_key_store";
         String keyStoreLocation = "keys/" + username + "_key_store.p12";
+        String keyStorePassword = username + "_pwd";
 
         InputStream keyPairAsStream = Util.getFileFromResourceAsStream(keyStoreLocation);
 
@@ -58,18 +45,9 @@ public class CryptoKeysUtil {
 
 
     static public PrivateKey getPrivateKeyFromKeystore(String username) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, UnrecoverableKeyException {
-        String keyAlias = username + "keyStore";
+        String keyAlias = username + "_key_store";
         String keyStoreLocation = "keys/" + username + "_key_store.p12";
-
-        InputStream keyPairAsStream = Util.getFileFromResourceAsStream(keyStoreLocation);
-
-        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(keyPairAsStream, keyStorePassword.toCharArray());
-        return (PrivateKey) keyStore.getKey(keyAlias, keyStorePassword.toCharArray());
-    }
-
-    static public PrivateKey getPrivateKeyFromKeystore(String username, String keyAlias) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, UnrecoverableKeyException {
-        String keyStoreLocation = "keys/" + username + "_key_store.p12";
+        String keyStorePassword = username + "_pwd";
 
         InputStream keyPairAsStream = Util.getFileFromResourceAsStream(keyStoreLocation);
 

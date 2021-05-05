@@ -46,7 +46,6 @@ public class SessionService {
         signature.update(String.valueOf(skr.getNonce()).getBytes(StandardCharsets.UTF_8));
 
         return new SignedSessionKeyRequest(skr, signature.sign());
-
     }
 
     public boolean verifyCipheredSessionKeyResponse( CipheredSessionKeyResponse cskr) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException,SignatureException, InvalidKeyException{
@@ -58,7 +57,7 @@ public class SessionService {
         LOG.info(cskr.toString());
         LOG.info("-----------------------------------------------------");
 
-        PublicKey serverPub = CryptoKeysUtil.getPublicKeyFromKeystore("location_server", "locationServerKeyStore");
+        PublicKey serverPub = CryptoKeysUtil.getPublicKeyFromKeystore("location_server");
 
         Signature signature = Signature.getInstance("SHA256withRSA");
         signature.initVerify(serverPub);
@@ -69,7 +68,6 @@ public class SessionService {
     }
 
     public Key decipherSessionKey(byte[] cipheredSessionKeyBytes, PrivateKey userPriv) throws InvalidKeyException, IllegalBlockSizeException, NoSuchAlgorithmException, NoSuchPaddingException, BadPaddingException{
-
         Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         cipher.init(Cipher.DECRYPT_MODE, userPriv);
 
@@ -78,13 +76,12 @@ public class SessionService {
 
         Key sessionKey = new SecretKeySpec(decipheredSessionKeyBytes, 0, decipheredSessionKeyBytes.length, "AES");
 
-
         return sessionKey;
     }
 
     public Key handleCipheredSessionKeyResponse( CipheredSessionKeyResponse cskr ) {
         try {
-            PublicKey serverPub = CryptoKeysUtil.getPublicKeyFromKeystore("location_server", "locationServerKeyStore");
+            PublicKey serverPub = CryptoKeysUtil.getPublicKeyFromKeystore("location_server");
         }
         catch(Exception e){
             LOG.info("Erorr loading server public key");

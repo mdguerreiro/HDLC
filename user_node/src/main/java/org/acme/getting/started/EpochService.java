@@ -16,7 +16,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import org.acme.crypto.SessionService;
 
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
