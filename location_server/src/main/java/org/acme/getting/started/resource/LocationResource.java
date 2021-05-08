@@ -1,9 +1,14 @@
-package org.acme.getting.started;
+package org.acme.getting.started.resource;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
+import org.acme.crypto.ServerSessionService;
+import org.acme.getting.started.model.CipheredLocationReport;
+import org.acme.getting.started.model.LocationReport;
+import org.acme.getting.started.LocationService;
+import org.acme.getting.started.model.LocationRequest;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
 import java.io.IOException;
@@ -13,8 +18,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.Key;
-
-import java.util.Base64;
 
 @Path("/location")
 public class LocationResource {

@@ -1,10 +1,11 @@
-package org.acme.getting.started;
+package org.acme.getting.started.resource;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
 
-import org.jboss.resteasy.annotations.jaxrs.PathParam;
+import org.acme.crypto.ServerSessionService;
+import org.acme.getting.started.model.CipheredSessionKeyResponse;
+import org.acme.getting.started.model.SignedSessionKeyRequest;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -29,9 +30,10 @@ public class ServerSessionResource {
     @POST
     //@Produces(MediaType.TEXT_PLAIN)
     @Path("/")
-    public CipheredSessionKeyResponse submitSignedSessionKeyRequest(SignedSessionKeyRequest sskr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, UnrecoverableKeyException,BadPaddingException {
+    public CipheredSessionKeyResponse submitSignedSessionKeyRequest(SignedSessionKeyRequest sskr) throws CertificateException, NoSuchAlgorithmException,
+            KeyStoreException, IOException, SignatureException, InvalidKeyException, NoSuchPaddingException,
+            IllegalBlockSizeException, UnrecoverableKeyException,BadPaddingException {
         return service.handleSignedSessionKeyRequest(sskr);
     }
-
 
 }

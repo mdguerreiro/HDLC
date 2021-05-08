@@ -1,4 +1,4 @@
-package org.acme.getting.started;
+package org.acme.getting.started.model;
 
 
 import java.io.Serializable;

@@ -1,4 +1,4 @@
-package org.acme.getting.started;
+package org.acme.getting.started.model;
 
 import java.util.ArrayList;
 
@@ -51,7 +51,8 @@ public class LocationReport implements Serializable{
 
         ByteArrayInputStream bis = new ByteArrayInputStream(locationReportBytes);
 
-        ObjectInputStream in = new ObjectInputStream(bis);
+        ObjectInput in = null;
+        in = new ObjectInputStream(bis);
 
         Object obj = in.readObject();
 

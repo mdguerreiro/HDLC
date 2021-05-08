@@ -1,5 +1,6 @@
-package org.acme.getting.started;
+package org.acme.getting.started.resource;
 
+import org.acme.getting.started.model.LocationRequest;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
 

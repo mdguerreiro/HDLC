@@ -1,8 +1,10 @@
 package org.acme.getting.started;
 
 import org.acme.crypto.SignatureService;
+import org.acme.getting.started.model.Location;
+import org.acme.getting.started.model.LocationProofReply;
+import org.acme.getting.started.model.LocationProofRequest;
 import org.acme.lifecycle.AppLifecycleBean;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
 import javax.enterprise.context.RequestScoped;
