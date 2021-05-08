@@ -1,5 +1,7 @@
-package org.acme.getting.started;
+package org.acme.getting.started.resource;
 
+import org.acme.getting.started.model.CipheredLocationReport;
+import org.acme.getting.started.model.LocationRequest;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 

@@ -31,10 +31,10 @@ Resource URL Sample: file:java-io.jar!/json/file1.json
 
     // get a file from the resources folder
     // works everywhere, IDEA, unit test and JAR file.
-    public InputStream getFileFromResourceAsStream(String fileName) {
+    public static InputStream getFileFromResourceAsStream(String fileName) {
 
         // The class loader that loaded the class
-        ClassLoader classLoader = getClass().getClassLoader();
+        ClassLoader classLoader = Util.class.getClassLoader();
         InputStream inputStream = classLoader.getResourceAsStream(fileName);
 
         // the stream holding the file content

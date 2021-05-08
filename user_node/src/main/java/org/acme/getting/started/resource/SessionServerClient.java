@@ -1,5 +1,7 @@
-package org.acme.getting.started;
+package org.acme.getting.started.resource;
 
+import org.acme.getting.started.model.CipheredSessionKeyResponse;
+import org.acme.getting.started.model.SignedSessionKeyRequest;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import javax.ws.rs.POST;

@@ -1,4 +1,4 @@
-package org.acme.getting.started;
+package org.acme.getting.started.model;
 import org.apache.commons.codec.binary.Base64;
 
 import java.io.Serializable;
