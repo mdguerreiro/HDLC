@@ -5,7 +5,7 @@ import org.jboss.logging.Logger;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
+import java.io.*;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -15,17 +15,25 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 
 @Singleton
 public class LocationService {
     private static final Logger LOG = Logger.getLogger(LocationService.class);
-    private final ConcurrentHashMap<String, ConcurrentHashMap> users;
+    private ConcurrentHashMap<String, ConcurrentHashMap> users;
 
     @Inject
     SignatureService signatureService;
 
     public LocationService() {
-        this.users = new ConcurrentHashMap<>();
+        this.users = null;
+        try{
+            deserializeData();
+        } catch (Exception e) {
+            this.users = new ConcurrentHashMap<>();
+        }
     }
 
     public String submit_location_report(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
@@ -46,10 +54,11 @@ public class LocationService {
             }
         }
         LOG.info("Number of approved " + counter);
-        if(counter >= ((3 * f + 1) - f)){
+        if(counter >= f + 1){
             LOG.info("There is byzantine consensus, request was approved.");
             location_reports.put(lr.epoch, lr);
             users.put(lr.username, location_reports);
+            serializeData();
             return "Submitted";
         }
         else{
@@ -89,5 +98,43 @@ public class LocationService {
         }
         System.out.println("DONE");
         return users_at_loc.toString();
+    }
+
+    public void serializeData(){
+        try
+        {
+            FileOutputStream fos =
+                    new FileOutputStream("hashmap.ser");
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(this.users);
+            oos.close();
+            fos.close();
+            System.out.printf("Serialized HashMap data is saved in hashmap.ser");
+        }catch(IOException ioe)
+        {
+            ioe.printStackTrace();
+        }
+    }
+
+    public void deserializeData(){
+        try
+        {
+            FileInputStream fis = new FileInputStream("hashmap.ser");
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            this.users = (ConcurrentHashMap) ois.readObject();
+            ois.close();
+            fis.close();
+        }
+        catch(IOException ioe)
+        {
+            ioe.printStackTrace();
+
+        }
+        catch(ClassNotFoundException c)
+        {
+            LOG.error("Class not found");
+            c.printStackTrace();
+            return;
+        }
     }
 }
