@@ -1,8 +1,10 @@
 package org.acme.getting.started;
 
 import org.acme.crypto.SignatureService;
+import org.acme.getting.started.model.LocationProofReply;
+import org.acme.getting.started.model.LocationReport;
 import org.jboss.logging.Logger;
-import javax.enterprise.context.ApplicationScoped;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
@@ -13,7 +15,6 @@ import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.lang.Integer;
 import java.lang.Boolean;

@@ -1,5 +1,8 @@
-package org.acme.getting.started;
+package org.acme.getting.started.resource;
 
+import org.acme.getting.started.ProofService;
+import org.acme.getting.started.model.LocationProofReply;
+import org.acme.getting.started.model.LocationProofRequest;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.faulttolerance.Timeout;
 

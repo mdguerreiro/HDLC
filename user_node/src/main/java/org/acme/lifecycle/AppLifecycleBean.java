@@ -5,7 +5,7 @@ import javax.enterprise.event.Observes;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
-import org.acme.getting.started.Location;
+import org.acme.getting.started.model.Location;
 import org.jboss.logging.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
