@@ -28,10 +28,10 @@ public class CryptoKeysUtil {
 
     }
 
-    public static PublicKey getPublicKeyFromKeystore(String username) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
-        String keyAlias = username + "_key_store";
-        String keyStoreLocation = "keys/" + username + "_key_store.p12";
-        String keyStorePassword = username + "_pwd";
+    public static PublicKey getPublicKeyFromKeystore(String serverName) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
+        String keyAlias = serverName + "_key_store";
+        String keyStoreLocation = "keys/" + serverName + "_key_store.p12";
+        String keyStorePassword = serverName + "_pwd";
 
         InputStream keyPairAsStream = Util.getFileFromResourceAsStream(keyStoreLocation);
 
@@ -44,10 +44,10 @@ public class CryptoKeysUtil {
     }
 
 
-    static public PrivateKey getPrivateKeyFromKeystore(String username) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, UnrecoverableKeyException {
-        String keyAlias = username + "_key_store";
-        String keyStoreLocation = "keys/" + username + "_key_store.p12";
-        String keyStorePassword = username + "_pwd";
+    static public PrivateKey getPrivateKeyFromKeystore(String serverName) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, UnrecoverableKeyException {
+        String keyAlias = serverName + "_key_store";
+        String keyStoreLocation = "keys/" + serverName + "_key_store.p12";
+        String keyStorePassword = serverName + "_pwd";
 
         InputStream keyPairAsStream = Util.getFileFromResourceAsStream(keyStoreLocation);
 

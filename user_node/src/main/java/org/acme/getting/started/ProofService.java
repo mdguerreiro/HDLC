@@ -31,7 +31,7 @@ public class ProofService {
         String my_username = System.getenv("USERNAME");
         String status = "DENIED";
         String signatureBase64;
-        String isByzantine = System.getenv("isByzantine");
+        String isByzantine = System.getenv("IS_BYZANTINE");
         try {
             boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForLocationReply(lpr.username, lpr.xLoc, lpr.yLoc, lpr.signatureBase64);
 
