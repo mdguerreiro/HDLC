@@ -1,7 +1,7 @@
 {
   "user1":  "http://localhost:8091",
   "user2":  "http://localhost:8092",
-  "user3":  "http://localhost:8093"
-  "user4":  "http://localhost:8094"
+  "user3":  "http://localhost:8093",
+  "user4":  "http://localhost:8094",
   "user5":  "http://localhost:8095"
 }
