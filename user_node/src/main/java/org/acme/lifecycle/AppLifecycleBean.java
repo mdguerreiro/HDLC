@@ -22,11 +22,13 @@ public class AppLifecycleBean {
     private static final Logger LOGGER = Logger.getLogger("ListenerBean");
     // Shared Data Structures
     public static HashMap<String, String> hosts = new HashMap<>();
+    public static HashMap<String, String> location_servers = new HashMap<>();
     public static ArrayList<HashMap> epochs = new ArrayList<>();
 
 
     public static final String USERS_PATH = "classes/json/users.json";
     public static final String GRID_PATH = "classes/json/grid.json";
+    public static final String SERVERS_PATH = "classes/json/servers.json";
 
     void onStart(@Observes StartupEvent ev) throws InterruptedException {
         Thread.sleep(10000);
@@ -34,6 +36,8 @@ public class AppLifecycleBean {
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
         LOGGER.info("Loading users/hosts info file...");
         load_json_users();
+        LOGGER.info("Loading location servers/hosts info file...");
+        load_json_servers();
         load_json_grid();
         LOGGER.info("Loading bluetooth grid emulator...");
         LOGGER.info("Loading epoch time clock...");
@@ -78,6 +82,25 @@ public class AppLifecycleBean {
                 epochs.add(users_loc);
 
             }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void load_json_servers(){
+        JSONParser jsonParser = new JSONParser();
+        try {
+            //Parsing the contents of the JSON file
+            JSONObject jsonObject = (JSONObject) jsonParser.parse(new FileReader(SERVERS_PATH));
+
+            for (Object temp : jsonObject.keySet()){
+                location_servers.put((String) temp, (String) jsonObject.get(temp));
+            }
+
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {

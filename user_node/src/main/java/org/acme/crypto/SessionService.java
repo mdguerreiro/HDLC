@@ -20,6 +20,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
 import java.util.Base64;
+import java.util.HashMap;
 
 @Startup
 @Singleton
@@ -27,14 +28,14 @@ public class SessionService {
 
     private static final Logger LOG = Logger.getLogger(SessionService.class);
 
-    Key sessionKey = null;
+    public static HashMap<String, Key> locationServerSessionKeyMap = new HashMap<>();
 
-    public Key getSessionKey(){
-        return sessionKey;
+    public Key getSessionKey(String location_server_url){
+        return locationServerSessionKeyMap.get(location_server_url);
     }
 
-    public void setSessionKey(Key key){
-        this.sessionKey = key;
+    public void addSessionKey(String location_server_url, Key key) {
+        locationServerSessionKeyMap.put(location_server_url, key);
     }
 
     public SignedSessionKeyRequest signSessionKeyRequest(SessionKeyRequest skr, PrivateKey privKey ) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
@@ -48,7 +49,7 @@ public class SessionService {
         return new SignedSessionKeyRequest(skr, signature.sign());
     }
 
-    public boolean verifyCipheredSessionKeyResponse( CipheredSessionKeyResponse cskr) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException,SignatureException, InvalidKeyException{
+    public boolean verifyCipheredSessionKeyResponse(CipheredSessionKeyResponse cskr, String serverName) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException,SignatureException, InvalidKeyException{
 
         byte[] cipheredKeyBytes = cskr.getCipheredAESKeyBytes();
         byte[] serverSignature = cskr.getServerSignature();
@@ -57,7 +58,7 @@ public class SessionService {
         LOG.info(cskr.toString());
         LOG.info("-----------------------------------------------------");
 
-        PublicKey serverPub = CryptoKeysUtil.getPublicKeyFromKeystore("location_server");
+        PublicKey serverPub = CryptoKeysUtil.getPublicKeyFromKeystore(serverName);
 
         Signature signature = Signature.getInstance("SHA256withRSA");
         signature.initVerify(serverPub);
@@ -79,9 +80,9 @@ public class SessionService {
         return sessionKey;
     }
 
-    public Key handleCipheredSessionKeyResponse( CipheredSessionKeyResponse cskr ) {
+    public Key handleCipheredSessionKeyResponse(CipheredSessionKeyResponse cskr, String serverName, String serverUrl) {
         try {
-            PublicKey serverPub = CryptoKeysUtil.getPublicKeyFromKeystore("location_server");
+            PublicKey serverPub = CryptoKeysUtil.getPublicKeyFromKeystore(serverName);
         }
         catch(Exception e){
             LOG.info("Erorr loading server public key");
@@ -90,7 +91,7 @@ public class SessionService {
 
         try {
 
-            boolean validSignature = verifyCipheredSessionKeyResponse(cskr);
+            boolean validSignature = verifyCipheredSessionKeyResponse(cskr, serverName);
 
             if(validSignature){
                 LOG.info("Server sent a valid Session key response");
@@ -103,7 +104,7 @@ public class SessionService {
             Key key = decipherSessionKey( cskr.getCipheredAESKeyBytes(), userPriv );
 
             LOG.info("Session Key deciphered - " + Base64.getEncoder().encodeToString(key.getEncoded()) );
-            this.sessionKey = key;
+            this.addSessionKey(serverUrl, key);
             return key;
 
         }

@@ -99,7 +99,8 @@ public class ServerSessionService {
         //sign the ciphered session key with the private key of the server
         PrivateKey serverPriv;
         try {
-             serverPriv = CryptoKeysUtil.getPrivateKeyFromKeystore("location_server");
+            String myServerName = System.getenv("SERVER_NAME");
+            serverPriv = CryptoKeysUtil.getPrivateKeyFromKeystore(myServerName);
         }
         catch(Exception e){
             e.printStackTrace();
