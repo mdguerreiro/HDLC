@@ -52,7 +52,7 @@ public class LocationReport implements Serializable{
 
         ByteArrayInputStream bis = new ByteArrayInputStream(locationReportBytes);
 
-        ObjectInput in = null;
+        ObjectInputStream in = null;
         in = new ObjectInputStream(bis);
 
         Object obj = in.readObject();
