@@ -1,13 +1,18 @@
 package org.acme.getting.started;
 
 import org.acme.crypto.SignatureService;
-import org.acme.getting.started.model.LocationProofReply;
-import org.acme.getting.started.model.LocationReport;
+import org.acme.getting.started.model.*;
+import org.acme.getting.started.resource.WriteRegisterClient;
+import org.acme.getting.started.resource.WriteRegisterResource;
+import org.acme.lifecycle.AppLifecycleBean;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.jboss.logging.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -15,6 +20,7 @@ import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.lang.Integer;
 import java.lang.Boolean;
@@ -33,8 +39,7 @@ public class LocationService {
         this.noncesOfUser = new ConcurrentHashMap<>();
     }
 
-    public String submit_location_report(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
-
+    public String validateLocationReport(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
         //check wether the location report contains a nonce that has already been received
         if(!isValidLocationReportNonce(lr.username, lr.nonce)){
             return String.format("Invalid nonce - %d", lr.nonce);
@@ -68,6 +73,34 @@ public class LocationService {
             LOG.info("There isn't byzantine consensus, request was denied.");
         }
         return "Failed";
+    }
+    public String submit_location_report(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, URISyntaxException {
+        String locationReportValidationResult = validateLocationReport(lr);
+
+        String isWriter = System.getenv("IS_WRITER");
+        if(isWriter.equals("true")) {
+            int acknowledgments = 0;
+            
+            Iterator serversIterator = AppLifecycleBean.location_servers.entrySet().iterator();
+            while (serversIterator.hasNext()) {
+                String myServerName = System.getenv("SERVER_NAME");
+                Map.Entry server = (Map.Entry)serversIterator.next();
+                String serverName = (String) server.getKey();
+                String serverUrl = (String) server.getValue();
+
+                /** Do not send to myself **/
+                if(myServerName != serverName) {
+                    WriteRegisterClient writeRegisterClient = RestClientBuilder.newBuilder()
+                            .baseUri(new URI(serverUrl))
+                            .build(WriteRegisterClient.class);
+                    WriteRegiterRequest writerRegisterRequest = new WriteRegiterRequest();
+
+                    String response = writeRegisterClient.submitWriteRegisterRequest(writerRegisterRequest);
+                }
+            }
+        }
+
+        return locationReportValidationResult;
     }
 
     public String get_location_report(String username, int epoch, String signatureBase64) {

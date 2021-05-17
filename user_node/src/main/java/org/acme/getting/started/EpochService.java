@@ -136,24 +136,22 @@ public class EpochService {
                         //LOG.info("deciphered location report bytes - " + Base64.getEncoder().encodeToString( LocationReport.toBytes(lr) ) );
 
                         LOG.info("Submitting location reports");
-                        Iterator serversIterator = AppLifecycleBean.location_servers.entrySet().iterator();
 
-                        while (serversIterator.hasNext()) {
-                            Map.Entry server = (Map.Entry)serversIterator.next();
-                            String serverUrl = (String) server.getValue();
+                        /**
+                         * Define localhost:8080 as writer
+                         * Further, the writer will deal with broadcasting the message implementing the Regular Register (1, N)
+                         * */
+                        Key sessionKey = sessionService.getSessionKey("http://localhost:8080");
+                        LOG.info("Ciphering lr with session key of the server: http://localhost:8080" + " - " + sessionKey);
+                        CipheredLocationReport clr = sessionService.cipherLocationReport(sessionKey, lr);
 
-                            Key sessionKey = sessionService.getSessionKey(serverUrl);
-                            LOG.info("Ciphering lr with session key of the server: " + serverUrl + " - " + sessionKey);
-                            CipheredLocationReport clr = sessionService.cipherLocationReport(sessionKey, lr);
-
-                            LOG.info(clr.getUsername());
-                            LOG.info("Submitting location report to the " + serverUrl);
-                            LocationServerClient lsc = RestClientBuilder.newBuilder()
-                                    .baseUri(new URI(serverUrl))
-                                    .build(LocationServerClient.class);
-                            String response = lsc.submitLocationReport(clr);
-                            LOG.info(String.format("location report submit response - {%s}", response));
-                        }
+                        LOG.info(clr.getUsername());
+                        LOG.info("Submitting location report to the " + "http://localhost:8080");
+                        LocationServerClient lsc = RestClientBuilder.newBuilder()
+                                .baseUri(new URI("http://localhost:8080"))
+                                .build(LocationServerClient.class);
+                        String response = lsc.submitLocationReport(clr);
+                        LOG.info(String.format("location report submit response - {%s}", response));
                     }
                 }
             }

@@ -12,6 +12,7 @@ import org.acme.getting.started.model.LocationRequest;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -30,7 +31,7 @@ public class LocationResource {
 
     @POST
     @Path("/")
-    public String submitCipheredLocationReport(CipheredLocationReport clr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
+    public String submitCipheredLocationReport(CipheredLocationReport clr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, URISyntaxException {
 
         String userId = clr.getUsername();
 
