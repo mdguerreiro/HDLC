@@ -16,22 +16,33 @@ import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
+import java.lang.Integer;
+import java.lang.Boolean;
 
 @Singleton
 public class LocationService {
     private static final Logger LOG = Logger.getLogger(LocationService.class);
     private final ConcurrentHashMap<String, ConcurrentHashMap> users;
+    private final ConcurrentHashMap<String, ConcurrentHashMap> noncesOfUser;
 
     @Inject
     SignatureService signatureService;
 
     public LocationService() {
         this.users = new ConcurrentHashMap<>();
+        this.noncesOfUser = new ConcurrentHashMap<>();
     }
 
     public String submit_location_report(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
+
+        //check wether the location report contains a nonce that has already been received
+        if(!isValidLocationReportNonce(lr.username, lr.nonce)){
+            return String.format("Invalid nonce - %d", lr.nonce);
+        }
+        addUserNonce(lr.username, lr.nonce);
+
         ConcurrentHashMap<Integer, LocationReport> location_reports = new ConcurrentHashMap<>();
-        LOG.info(String.format("Received location report submission from %s at epoch %d - checking validity", lr.username, lr.epoch));
+        LOG.info(String.format("Received location report submission from %s at epoch %d - checking validity, %d - nonce", lr.username, lr.epoch, lr.nonce));
         int f = Integer.parseInt(System.getenv("BYZANTINE_USERS"));
         boolean isSignatureCorrect = signatureService.verifySha256WithRSASignature(lr.username, lr.epoch, lr.x, lr.y, lr.replies, lr.signatureBase64);
 
@@ -90,5 +101,29 @@ public class LocationService {
         }
         System.out.println("DONE");
         return users_at_loc.toString();
+    }
+
+
+    public boolean isValidLocationReportNonce(String userId, int nonce){
+
+        ConcurrentHashMap<Integer, Boolean> userNoncesSet = noncesOfUser.get(userId);
+        if(userNoncesSet == null){
+            return true;
+        }
+        if(userNoncesSet.containsKey( new Integer(nonce)) ){
+            return false;
+        }
+        LOG.info(userNoncesSet.size());
+        return true;
+    }
+
+
+    public void addUserNonce(String userId, int nonce){
+        ConcurrentHashMap<Integer, Boolean> userNoncesSet = noncesOfUser.get(userId);
+        if(userNoncesSet == null){
+            noncesOfUser.put(userId, new ConcurrentHashMap<Integer, Boolean>() );
+            noncesOfUser.get(userId).put( new Integer(nonce), new Boolean(true) );
+        }
+        noncesOfUser.get(userId).put( new Integer(nonce), new Boolean(true) );
     }
 }

@@ -13,9 +13,10 @@ import java.io.Serializable;
 
 public class LocationReport implements Serializable{
 
+    private static final long serialVersionUID = 1;
 
     public String username, signatureBase64;
-    public int x, y, epoch;
+    public int x, y, epoch, nonce;
     public ArrayList<LocationProofReply> replies;
 
     public LocationReport(){
@@ -29,6 +30,7 @@ public class LocationReport implements Serializable{
         this.epoch = epoch;
         this.replies = replies;
         this.signatureBase64 = signatureBase64;
+        this.nonce = -1;
     }
 
 
@@ -60,6 +62,11 @@ public class LocationReport implements Serializable{
 
         return (LocationReport) obj;
 
+    }
+
+
+    public void setNonce(int n){
+        nonce = n;
     }
 
 }

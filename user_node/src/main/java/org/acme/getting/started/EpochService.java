@@ -124,7 +124,14 @@ public class EpochService {
                         String signatureBase64ForLocationReport = signatureService.generateSha256WithRSASignatureForLocationReport(my_username, epoch, my_Loc.get_X(), my_Loc.get_Y(), replies);
                         System.out.println("BASE64  " + signatureBase64);
 
+
                         LocationReport lr = new LocationReport(my_username, epoch, my_Loc.get_X(), my_Loc.get_Y(), replies, signatureBase64ForLocationReport);
+
+                        //set nonce
+                        lr.setNonce(ran.nextInt());
+                        //lr.setNonce(0);
+
+
 
                         //LOG.info("deciphered location report bytes - " + Base64.getEncoder().encodeToString( LocationReport.toBytes(lr) ) );
 
@@ -144,7 +151,8 @@ public class EpochService {
                             LocationServerClient lsc = RestClientBuilder.newBuilder()
                                     .baseUri(new URI(serverUrl))
                                     .build(LocationServerClient.class);
-                            lsc.submitLocationReport(clr);
+                            String response = lsc.submitLocationReport(clr);
+                            LOG.info(String.format("location report submit response - {%s}", response));
                         }
                     }
                 }

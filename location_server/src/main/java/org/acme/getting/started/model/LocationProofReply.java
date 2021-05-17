@@ -3,6 +3,8 @@ import java.io.Serializable;
 
 public class LocationProofReply implements Serializable{
 
+    private static final long serialVersionUID = 1;
+
     public String status;
     public String signer;
     public String signatureBase64;
