@@ -4,6 +4,7 @@ import org.acme.crypto.SignatureService;
 import org.acme.getting.started.model.*;
 import org.acme.getting.started.resource.WriteRegisterClient;
 import org.acme.getting.started.resource.WriteRegisterResource;
+import org.acme.getting.started.storage.LocationReportsStorage;
 import org.acme.lifecycle.AppLifecycleBean;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.jboss.logging.Logger;
@@ -43,7 +44,6 @@ public class LocationService {
         }
         addUserNonce(lr.username, lr.nonce);
 
-        ConcurrentHashMap<Integer, LocationReport> location_reports = new ConcurrentHashMap<>();
         LOG.info(String.format("Received location report submission from %s at epoch %d - checking validity, %d - nonce", lr.username, lr.epoch, lr.nonce));
         int f = Integer.parseInt(System.getenv("BYZANTINE_USERS"));
         boolean isSignatureCorrect = signatureService.verifySha256WithRSASignature(lr.username, lr.epoch, lr.x, lr.y, lr.replies, lr.signatureBase64);
@@ -62,8 +62,8 @@ public class LocationService {
         LOG.info("Number of approved " + counter);
         if(counter >= ((3 * f + 1) - f)){
             LOG.info("There is byzantine consensus, request was approved.");
-            location_reports.put(lr.epoch, lr);
-            users.put(lr.username, location_reports);
+            LocationReportsStorage.locationReports.put(lr.epoch, lr);
+            users.put(lr.username, LocationReportsStorage.locationReports);
             return "Submitted";
         }
         else{
@@ -74,10 +74,14 @@ public class LocationService {
     public String submit_location_report(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, URISyntaxException, UnrecoverableKeyException {
         String locationReportValidationResult = validateLocationReport(lr);
 
+        if(!locationReportValidationResult.equals("Submitted")) {
+            return locationReportValidationResult; // Do not send location report to replicas if val. result is failed
+        }
+
         String isWriter = System.getenv("IS_WRITER");
         if(isWriter.equals("true")) {
             int acknowledgments = 0;
-            
+            int replicasNumber = AppLifecycleBean.location_servers.entrySet().size() - 1; // Do not count myself
             Iterator serversIterator = AppLifecycleBean.location_servers.entrySet().iterator();
             while (serversIterator.hasNext()) {
                 String myServerName = System.getenv("SERVER_NAME");
@@ -85,19 +89,25 @@ public class LocationService {
                 String serverName = (String) server.getKey();
                 String serverUrl = (String) server.getValue();
 
-                /** TODO Fix-me */
-                int value = 1;
-
-                String signatureBase64 = signatureService.generateSha256WithRSASignatureForWriteRegister(serverName, value);
+                String signatureBase64 = "TEST";
+//                String signatureBase64 = signatureService.generateSha256WithRSASignatureForWriteRegister(serverName, lr);
 
                 /** Do not send to myself **/
                 if(myServerName != serverName) {
                     WriteRegisterClient writeRegisterClient = RestClientBuilder.newBuilder()
                             .baseUri(new URI(serverUrl))
                             .build(WriteRegisterClient.class);
-                    WriteRegiterRequest writerRegisterRequest = new WriteRegiterRequest(value, signatureBase64, myServerName);
-
+                    WriteRegisterRequest writerRegisterRequest = new WriteRegisterRequest(lr, signatureBase64, myServerName);
                     WriteRegisterReply writeRegisterReply = writeRegisterClient.submitWriteRegisterRequest(writerRegisterRequest);
+
+                    if(writeRegisterReply.acknowledgment.equals("true")) {
+                        acknowledgments++;
+                    }
+
+                    if(acknowledgments == replicasNumber) {
+                        LOG.info("LOCATION SERVER: " + myServerName + " got acknowledgments from all the replicas. Sending reply");
+                        return locationReportValidationResult;
+                    }
                 }
             }
         }

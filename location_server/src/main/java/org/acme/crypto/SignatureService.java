@@ -3,6 +3,7 @@ package org.acme.crypto;
 import io.quarkus.runtime.Startup;
 
 import org.acme.getting.started.model.LocationProofReply;
+import org.acme.getting.started.model.LocationReport;
 import org.apache.commons.codec.binary.Base64;
 import org.jboss.logging.Logger;
 
@@ -58,7 +59,7 @@ public class SignatureService {
         return signature.sign();
     }
 
-    public boolean verifySha256WithRSASignatureForWriteRegister(String serverName, int value, String receivedSignatureBase64) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException {
+    public boolean verifySha256WithRSASignatureForWriteRegister(String serverName, LocationReport locationReport, String receivedSignatureBase64) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException {
         LOG.info(String.format("WRITE REGISTER: Validating Sha256 with RSA Signature for write register"));
 
         PublicKey publicKey = CryptoKeysUtil.getPublicKeyFromKeystore(serverName);
@@ -67,7 +68,9 @@ public class SignatureService {
         signature.initVerify(publicKey);
 
         signature.update(serverName.getBytes(StandardCharsets.UTF_8));
-        signature.update(String.valueOf(value).getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(locationReport.epoch).getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(locationReport.x).getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(locationReport.y).getBytes(StandardCharsets.UTF_8));
 
         byte[] receivedSignature = Base64.decodeBase64(receivedSignatureBase64);
         boolean isValidSignature = signature.verify(receivedSignature);
@@ -81,7 +84,7 @@ public class SignatureService {
         return isValidSignature;
     }
 
-    public String generateSha256WithRSASignatureForWriteRegister(String serverName, int value) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, IOException, CertificateException, InvalidKeyException, SignatureException {
+    public String generateSha256WithRSASignatureForWriteRegister(String serverName, LocationReport locationReport) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, IOException, CertificateException, InvalidKeyException, SignatureException {
         LOG.info(String.format("WRITE REGISTER: Generating Sha256 with RSA Signature"));
 
         PrivateKey privateKey = CryptoKeysUtil.getPrivateKeyFromKeystore(serverName);
@@ -89,7 +92,24 @@ public class SignatureService {
         signature.initSign(privateKey);
 
         signature.update(serverName.getBytes(StandardCharsets.UTF_8));
-        signature.update(String.valueOf(value).getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(locationReport.epoch).getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(locationReport.x).getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(locationReport.y).getBytes(StandardCharsets.UTF_8));
+
+        byte[] signatureByteArray = signature.sign();
+
+        return java.util.Base64.getEncoder().encodeToString(signatureByteArray);
+    }
+
+    public String generateSha256WithRSASignatureForWriteReply(String serverName, String acknowledgment) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, IOException, CertificateException, InvalidKeyException, SignatureException {
+        LOG.info(String.format("WRITE REGISTER REPLY: Generating Sha256 with RSA Signature"));
+
+        PrivateKey privateKey = CryptoKeysUtil.getPrivateKeyFromKeystore(serverName);
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initSign(privateKey);
+
+        signature.update(serverName.getBytes(StandardCharsets.UTF_8));
+        signature.update(acknowledgment.getBytes(StandardCharsets.UTF_8));
 
         byte[] signatureByteArray = signature.sign();
 
