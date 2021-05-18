@@ -13,10 +13,7 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.InvalidKeyException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SignatureException;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -74,7 +71,7 @@ public class LocationService {
         }
         return "Failed";
     }
-    public String submit_location_report(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, URISyntaxException {
+    public String submit_location_report(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, URISyntaxException, UnrecoverableKeyException {
         String locationReportValidationResult = validateLocationReport(lr);
 
         String isWriter = System.getenv("IS_WRITER");
@@ -88,14 +85,19 @@ public class LocationService {
                 String serverName = (String) server.getKey();
                 String serverUrl = (String) server.getValue();
 
+                /** TODO Fix-me */
+                int value = 1;
+
+                String signatureBase64 = signatureService.generateSha256WithRSASignatureForWriteRegister(serverName, value);
+
                 /** Do not send to myself **/
                 if(myServerName != serverName) {
                     WriteRegisterClient writeRegisterClient = RestClientBuilder.newBuilder()
                             .baseUri(new URI(serverUrl))
                             .build(WriteRegisterClient.class);
-                    WriteRegiterRequest writerRegisterRequest = new WriteRegiterRequest();
+                    WriteRegiterRequest writerRegisterRequest = new WriteRegiterRequest(value, signatureBase64, myServerName);
 
-                    String response = writeRegisterClient.submitWriteRegisterRequest(writerRegisterRequest);
+                    WriteRegisterReply writeRegisterReply = writeRegisterClient.submitWriteRegisterRequest(writerRegisterRequest);
                 }
             }
         }

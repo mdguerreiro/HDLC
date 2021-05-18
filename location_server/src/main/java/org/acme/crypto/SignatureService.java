@@ -57,4 +57,42 @@ public class SignatureService {
 
         return signature.sign();
     }
+
+    public boolean verifySha256WithRSASignatureForWriteRegister(String serverName, int value, String receivedSignatureBase64) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException {
+        LOG.info(String.format("WRITE REGISTER: Validating Sha256 with RSA Signature for write register"));
+
+        PublicKey publicKey = CryptoKeysUtil.getPublicKeyFromKeystore(serverName);
+
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initVerify(publicKey);
+
+        signature.update(serverName.getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(value).getBytes(StandardCharsets.UTF_8));
+
+        byte[] receivedSignature = Base64.decodeBase64(receivedSignatureBase64);
+        boolean isValidSignature = signature.verify(receivedSignature);
+
+        if(isValidSignature) {
+            LOG.info("WRITE REGISTER: Signature Validation was performed successfully. Signature is valid");
+        } else {
+            LOG.info("WRITE REGISTER: Signature Validation failed. Signature is invalid");
+        }
+
+        return isValidSignature;
+    }
+
+    public String generateSha256WithRSASignatureForWriteRegister(String serverName, int value) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, IOException, CertificateException, InvalidKeyException, SignatureException {
+        LOG.info(String.format("WRITE REGISTER: Generating Sha256 with RSA Signature"));
+
+        PrivateKey privateKey = CryptoKeysUtil.getPrivateKeyFromKeystore(serverName);
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initSign(privateKey);
+
+        signature.update(serverName.getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(value).getBytes(StandardCharsets.UTF_8));
+
+        byte[] signatureByteArray = signature.sign();
+
+        return java.util.Base64.getEncoder().encodeToString(signatureByteArray);
+    }
 }

@@ -1,5 +1,6 @@
 package org.acme.getting.started.resource;
 
+import org.acme.getting.started.model.WriteRegisterReply;
 import org.acme.getting.started.model.WriteRegiterRequest;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
@@ -12,5 +13,5 @@ public interface WriteRegisterClient {
 
     @POST
     @Path("/")
-    String submitWriteRegisterRequest(WriteRegiterRequest writeRegiterRequest);
+    WriteRegisterReply submitWriteRegisterRequest(WriteRegiterRequest writeRegiterRequest);
 }

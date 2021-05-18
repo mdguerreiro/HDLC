@@ -2,11 +2,15 @@ package org.acme.getting.started.resource;
 
 import org.acme.crypto.SignatureService;
 import org.acme.getting.started.WriteRegisterService;
+import org.acme.getting.started.model.WriteRegisterReply;
 import org.acme.getting.started.model.WriteRegiterRequest;
 
 import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import java.io.IOException;
+import java.security.*;
+import java.security.cert.CertificateException;
 
 @Path("/register")
 public class WriteRegisterResource {
@@ -16,7 +20,7 @@ public class WriteRegisterResource {
 
     @POST
     @Path("/")
-    public String submitWriteRegisterRequest(WriteRegiterRequest wrq) {
+    public WriteRegisterReply submitWriteRegisterRequest(WriteRegiterRequest wrq) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, UnrecoverableKeyException {
         return writeRegisterService.submitWriteRegisterRequest(wrq);
     }
 }

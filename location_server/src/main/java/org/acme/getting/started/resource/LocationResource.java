@@ -13,12 +13,8 @@ import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.security.InvalidKeyException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SignatureException;
+import java.security.*;
 import java.security.cert.CertificateException;
-import java.security.Key;
 
 @Path("/location")
 public class LocationResource {
@@ -31,7 +27,7 @@ public class LocationResource {
 
     @POST
     @Path("/")
-    public String submitCipheredLocationReport(CipheredLocationReport clr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, URISyntaxException {
+    public String submitCipheredLocationReport(CipheredLocationReport clr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, URISyntaxException, UnrecoverableKeyException {
 
         String userId = clr.getUsername();
 
