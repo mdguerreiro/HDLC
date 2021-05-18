@@ -89,6 +89,7 @@ public class LocationService {
                 String serverName = (String) server.getKey();
                 String serverUrl = (String) server.getValue();
 
+                /* TODO FIX SIGNATURE */
                 String signatureBase64 = "TEST";
 //                String signatureBase64 = signatureService.generateSha256WithRSASignatureForWriteRegister(serverName, lr);
 
