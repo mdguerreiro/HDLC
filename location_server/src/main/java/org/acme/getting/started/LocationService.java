@@ -8,6 +8,8 @@ import org.jboss.logging.Logger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.*;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -22,7 +24,7 @@ import java.lang.Boolean;
 @Singleton
 public class LocationService {
     private static final Logger LOG = Logger.getLogger(LocationService.class);
-    private final ConcurrentHashMap<String, ConcurrentHashMap> users;
+    private ConcurrentHashMap<String, ConcurrentHashMap> users;
     private final ConcurrentHashMap<String, ConcurrentHashMap> noncesOfUser;
 
     @Inject
@@ -112,39 +114,29 @@ public class LocationService {
     public void serializeData(){
         try
         {
+            ClassLoader classLoader = getClass().getClassLoader();
+            URL resource = classLoader.getResource("hashmap.ser");
             FileOutputStream fos =
-                    new FileOutputStream("hashmap.ser");
+                    new FileOutputStream(new File(resource.toURI()));
             ObjectOutputStream oos = new ObjectOutputStream(fos);
             oos.writeObject(this.users);
             oos.close();
             fos.close();
             System.out.printf("Serialized HashMap data is saved in hashmap.ser");
-        }catch(IOException ioe)
+        }catch(IOException | URISyntaxException ioe)
         {
             ioe.printStackTrace();
         }
     }
 
-    public void deserializeData(){
-        try
-        {
-            FileInputStream fis = new FileInputStream("hashmap.ser");
-            ObjectInputStream ois = new ObjectInputStream(fis);
-            this.users = (ConcurrentHashMap) ois.readObject();
-            ois.close();
-            fis.close();
-        }
-        catch(IOException ioe)
-        {
-            ioe.printStackTrace();
-
-        }
-        catch(ClassNotFoundException c)
-        {
-            LOG.error("Class not found");
-            c.printStackTrace();
-            return;
-        }
+    public void deserializeData() throws IOException, ClassNotFoundException, URISyntaxException {
+        ClassLoader classLoader = getClass().getClassLoader();
+        URL resource = classLoader.getResource("hashmap.ser");
+        FileInputStream fis = new FileInputStream(new File(resource.toURI()));
+        ObjectInputStream ois = new ObjectInputStream(fis);
+        this.users = (ConcurrentHashMap) ois.readObject();
+        ois.close();
+        fis.close();
     }
 
     public boolean isValidLocationReportNonce(String userId, int nonce){
