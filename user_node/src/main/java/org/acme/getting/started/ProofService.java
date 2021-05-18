@@ -1,8 +1,10 @@
 package org.acme.getting.started;
 
 import org.acme.crypto.SignatureService;
+import org.acme.getting.started.model.Location;
+import org.acme.getting.started.model.LocationProofReply;
+import org.acme.getting.started.model.LocationProofRequest;
 import org.acme.lifecycle.AppLifecycleBean;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
 import javax.enterprise.context.RequestScoped;
@@ -29,7 +31,7 @@ public class ProofService {
         String my_username = System.getenv("USERNAME");
         String status = "DENIED";
         String signatureBase64;
-        String isByzantine = System.getenv("isByzantine");
+        String isByzantine = System.getenv("IS_BYZANTINE");
         try {
             boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForLocationReply(lpr.username, lpr.xLoc, lpr.yLoc, lpr.signatureBase64);
 

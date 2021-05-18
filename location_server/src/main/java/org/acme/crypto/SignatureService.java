@@ -2,8 +2,7 @@ package org.acme.crypto;
 
 import io.quarkus.runtime.Startup;
 
-import org.acme.getting.started.LocationProofReply;
-import org.acme.utils.Util;
+import org.acme.getting.started.model.LocationProofReply;
 import org.apache.commons.codec.binary.Base64;
 import org.jboss.logging.Logger;
 
@@ -11,7 +10,6 @@ import javax.inject.Singleton;
 import java.io.*;
 
 import java.nio.charset.StandardCharsets;
-import java.security.cert.Certificate;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
@@ -20,38 +18,11 @@ import java.util.ArrayList;
 @Singleton
 public class SignatureService {
     private static final Logger LOG = Logger.getLogger(SignatureService.class);
-    final String keyStorePassword = "changeit";
-    Util util = new Util();
 
-    private PublicKey getPublicKeyFromKeystore(String username) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
-        String keyAlias = username + "keyStore";
-        String keyStoreLocation = "keys/" + username + "_key_store.p12";
-
-        InputStream keyPairAsStream = util.getFileFromResourceAsStream(keyStoreLocation);
-
-        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(keyPairAsStream, keyStorePassword.toCharArray());
-
-        Certificate certificate = keyStore.getCertificate(keyAlias);
-
-        return certificate.getPublicKey();
-    }
-
-    private PrivateKey getPrivateKeyFromKeystore(String username) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, UnrecoverableKeyException {
-        String keyAlias = username + "keyStore";
-        String keyStoreLocation = "keys/" + username + "_key_store.p12";
-
-        InputStream keyPairAsStream = util.getFileFromResourceAsStream(keyStoreLocation);
-
-        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(keyPairAsStream, keyStorePassword.toCharArray());
-        return (PrivateKey) keyStore.getKey(keyAlias, keyStorePassword.toCharArray());
-    }
-
-    public boolean verifySha256WithRSASignature(String username, int epoch, int xLoc, int yLoc, ArrayList<LocationProofReply>replies, String receivedSignatureBase64) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException {
+    public boolean verifySha256WithRSASignature(String username, int epoch, int xLoc, int yLoc, ArrayList<LocationProofReply> replies, String receivedSignatureBase64) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException {
         LOG.info(String.format("Validating Sha256 with RSA Signature"));
 
-        PublicKey publicKey = getPublicKeyFromKeystore(username);
+        PublicKey publicKey = CryptoKeysUtil.getPublicKeyFromKeystore(username);
 
         Signature signature = Signature.getInstance("SHA256withRSA");
         signature.initVerify(publicKey);
@@ -77,7 +48,7 @@ public class SignatureService {
         LOG.info(String.format("Generating Sha256 with RSA Signature"));
         LOG.info(String.format("%s Location Reply status -> %s", username, status));
 
-        PrivateKey privateKey = getPrivateKeyFromKeystore(username);
+        PrivateKey privateKey = CryptoKeysUtil.getPrivateKeyFromKeystore(username);
         Signature signature = Signature.getInstance("SHA256withRSA");
         signature.initSign(privateKey);
 

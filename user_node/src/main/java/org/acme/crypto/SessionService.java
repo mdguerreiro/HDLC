@@ -1,71 +1,44 @@
 package org.acme.crypto;
 
-import org.acme.crypto.SignatureService;
+import org.acme.getting.started.model.*;
 import org.jboss.logging.Logger;
 import javax.inject.Singleton;
 
 import io.quarkus.runtime.Startup;
 
-import java.io.InputStream;
-
-import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 
 import java.security.*;
 
 import java.io.IOException;
-
-import org.acme.utils.Util;
-
 import java.nio.charset.StandardCharsets;
-
-import org.acme.getting.started.SessionKeyRequest;
-import org.acme.getting.started.SignedSessionKeyRequest;
-import org.acme.getting.started.CipheredSessionKeyResponse;
-import org.acme.getting.started.CipheredLocationReport;
-import org.acme.getting.started.LocationReport;
 
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.BadPaddingException;
-import javax.crypto.KeyGenerator;
 import javax.crypto.spec.SecretKeySpec;
 
-
 import java.util.Base64;
+import java.util.HashMap;
 
 @Startup
 @Singleton
 public class SessionService {
 
-    private static final Logger LOG = Logger.getLogger(SignatureService.class);
-    final String keyStorePassword = "changeit";
-    Util util = new Util();
+    private static final Logger LOG = Logger.getLogger(SessionService.class);
 
-    Key sessionKey = null;
+    public static HashMap<String, Key> locationServerSessionKeyMap = new HashMap<>();
 
-    public byte[] generateAESSessionKey() throws NoSuchAlgorithmException {
-
-        KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-        keyGen.init(128);
-        Key key = keyGen.generateKey();
-        System.out.println("Finish generating AES key");
-        byte[] encoded = key.getEncoded();
-
-        return encoded;
-
+    public Key getSessionKey(String location_server_url){
+        return locationServerSessionKeyMap.get(location_server_url);
     }
 
-    public Key getSessionKey(){
-        return sessionKey;
+    public void addSessionKey(String location_server_url, Key key) {
+        locationServerSessionKeyMap.put(location_server_url, key);
     }
 
-    public void setSessionKey(Key key){
-        this.sessionKey = key;
-    }
-
-    public SignedSessionKeyRequest signSessionKeyRequest( SessionKeyRequest skr, PrivateKey privKey ) throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+    public SignedSessionKeyRequest signSessionKeyRequest(SessionKeyRequest skr, PrivateKey privKey ) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
         Signature signature = Signature.getInstance("SHA256withRSA");
         signature.initSign(privKey);
@@ -74,58 +47,9 @@ public class SessionService {
         signature.update(String.valueOf(skr.getNonce()).getBytes(StandardCharsets.UTF_8));
 
         return new SignedSessionKeyRequest(skr, signature.sign());
-
     }
 
-
-    public PublicKey getPublicKeyFromKeystore(String username) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
-        String keyAlias = username + "keyStore";
-        String keyStoreLocation = "keys/" + username + "_key_store.p12";
-
-        InputStream keyPairAsStream = util.getFileFromResourceAsStream(keyStoreLocation);
-
-        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(keyPairAsStream, keyStorePassword.toCharArray());
-
-        Certificate certificate = keyStore.getCertificate(keyAlias);
-
-        return certificate.getPublicKey();
-    }
-
-
-    public PublicKey getPublicKeyFromKeystore(String username, String keyAlias) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
-        String keyStoreLocation = "keys/" + username + "_key_store.p12";
-
-        InputStream keyPairAsStream = util.getFileFromResourceAsStream(keyStoreLocation);
-
-        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(keyPairAsStream, keyStorePassword.toCharArray());
-
-        Certificate certificate = keyStore.getCertificate(keyAlias);
-
-        return certificate.getPublicKey();
-    }
-
-    public PrivateKey getPrivateKeyFromKeystore(String username) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, UnrecoverableKeyException {
-        String keyAlias = username + "keyStore";
-        String keyStoreLocation = "keys/" + username + "_key_store.p12";
-
-        InputStream keyPairAsStream = util.getFileFromResourceAsStream(keyStoreLocation);
-
-        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(keyPairAsStream, keyStorePassword.toCharArray());
-        return (PrivateKey) keyStore.getKey(keyAlias, keyStorePassword.toCharArray());
-    }
-
-    public Key decipherSessionKeyResponse( CipheredSessionKeyResponse cskr, PrivateKey userKey){
-
-        byte[] cipheredAESKeyBytes = cskr.getCipheredAESKeyBytes();
-
-        return null;
-    }
-
-
-    public boolean verifyCipheredSessionKeyResponse( CipheredSessionKeyResponse cskr) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException,SignatureException, InvalidKeyException{
+    public boolean verifyCipheredSessionKeyResponse(CipheredSessionKeyResponse cskr, String serverName) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException,SignatureException, InvalidKeyException{
 
         byte[] cipheredKeyBytes = cskr.getCipheredAESKeyBytes();
         byte[] serverSignature = cskr.getServerSignature();
@@ -134,9 +58,7 @@ public class SessionService {
         LOG.info(cskr.toString());
         LOG.info("-----------------------------------------------------");
 
-
-
-        PublicKey serverPub = getPublicKeyFromKeystore("location_server", "locationServerKeyStore");
+        PublicKey serverPub = CryptoKeysUtil.getPublicKeyFromKeystore(serverName);
 
         Signature signature = Signature.getInstance("SHA256withRSA");
         signature.initVerify(serverPub);
@@ -146,9 +68,7 @@ public class SessionService {
         return signature.verify(serverSignature);
     }
 
-
     public Key decipherSessionKey(byte[] cipheredSessionKeyBytes, PrivateKey userPriv) throws InvalidKeyException, IllegalBlockSizeException, NoSuchAlgorithmException, NoSuchPaddingException, BadPaddingException{
-
         Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         cipher.init(Cipher.DECRYPT_MODE, userPriv);
 
@@ -157,14 +77,12 @@ public class SessionService {
 
         Key sessionKey = new SecretKeySpec(decipheredSessionKeyBytes, 0, decipheredSessionKeyBytes.length, "AES");
 
-
         return sessionKey;
     }
 
-
-    public Key handleCipheredSessionKeyResponse( CipheredSessionKeyResponse cskr ) {
+    public Key handleCipheredSessionKeyResponse(CipheredSessionKeyResponse cskr, String serverName, String serverUrl) {
         try {
-            PublicKey serverPub = getPublicKeyFromKeystore("location_server", "locationServerKeyStore");
+            PublicKey serverPub = CryptoKeysUtil.getPublicKeyFromKeystore(serverName);
         }
         catch(Exception e){
             LOG.info("Erorr loading server public key");
@@ -173,7 +91,7 @@ public class SessionService {
 
         try {
 
-            boolean validSignature = verifyCipheredSessionKeyResponse(cskr);
+            boolean validSignature = verifyCipheredSessionKeyResponse(cskr, serverName);
 
             if(validSignature){
                 LOG.info("Server sent a valid Session key response");
@@ -182,11 +100,11 @@ public class SessionService {
                 LOG.info("Server sent an invalid Session key response");
             }
 
-            PrivateKey userPriv = getPrivateKeyFromKeystore(System.getenv("USERNAME"));
+            PrivateKey userPriv = CryptoKeysUtil.getPrivateKeyFromKeystore(System.getenv("USERNAME"));
             Key key = decipherSessionKey( cskr.getCipheredAESKeyBytes(), userPriv );
 
             LOG.info("Session Key deciphered - " + Base64.getEncoder().encodeToString(key.getEncoded()) );
-            this.sessionKey = key;
+            this.addSessionKey(serverUrl, key);
             return key;
 
         }
@@ -196,12 +114,9 @@ public class SessionService {
         }
 
        return null;
-
     }
 
-
     public CipheredLocationReport cipherLocationReport(Key sessionKey, LocationReport lr){
-
         try {
             byte[] locationReportBytes = LocationReport.toBytes(lr);
             Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
@@ -216,14 +131,11 @@ public class SessionService {
 
             return new CipheredLocationReport("error", (new String("error").getBytes() ) );
         }
-
     }
-
 
     public LocationReport decipherLocationReport(Key sessionKey, CipheredLocationReport clr){
 
         try {
-
             Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
             cipher.init(Cipher.DECRYPT_MODE, sessionKey);
 
@@ -238,11 +150,6 @@ public class SessionService {
             e.printStackTrace();
 
         }
-
         return null;
-
     }
-
-
-
 }
