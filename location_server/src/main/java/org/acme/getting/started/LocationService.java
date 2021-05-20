@@ -44,13 +44,14 @@ public class LocationService {
         }
         addUserNonce(lr.username, lr.nonce);
 
+        ConcurrentHashMap<Integer, LocationReport> location_reports = new ConcurrentHashMap<>();
         LOG.info(String.format("Received location report submission from %s at epoch %d - checking validity, %d - nonce", lr.username, lr.epoch, lr.nonce));
         int f = Integer.parseInt(System.getenv("BYZANTINE_USERS"));
         boolean isSignatureCorrect = signatureService.verifySha256WithRSASignature(lr.username, lr.epoch, lr.x, lr.y, lr.replies, lr.signatureBase64);
 
         if(!isSignatureCorrect) {
             LOG.info("Signature Validation Failed. Aborting");
-            return "Failed";
+            return "Signature Failed";
         }
         ArrayList<LocationProofReply> replies = lr.replies;
         int counter = 0;
@@ -60,10 +61,10 @@ public class LocationService {
             }
         }
         LOG.info("Number of approved " + counter);
-        if(counter >= ((3 * f + 1) - f)){
+        if(counter >= (f+1)){
             LOG.info("There is byzantine consensus, request was approved.");
-            LocationReportsStorage.locationReports.put(lr.epoch, lr);
-            users.put(lr.username, LocationReportsStorage.locationReports);
+            location_reports.put(lr.epoch, lr);
+            users.put(lr.username, location_reports);
             return "Submitted";
         }
         else{
@@ -91,7 +92,7 @@ public class LocationService {
 
                 /* TODO FIX SIGNATURE */
                 String signatureBase64 = "TEST";
-//                String signatureBase64 = signatureService.generateSha256WithRSASignatureForWriteRegister(serverName, lr);
+//              String signatureBase64 = signatureService.generateSha256WithRSASignatureForWriteRegister(serverName, lr);
 
                 /** Do not send to myself **/
                 if(myServerName != serverName) {
@@ -125,8 +126,6 @@ public class LocationService {
         }catch (NullPointerException e){
             return "Not found";
         }
-        System.out.println("DONE");
-        System.out.println(users.toString());
         return String.format("User %s was at location x:%s y:%s", lr.username, lr.x, lr.y);
     }
 
@@ -145,7 +144,8 @@ public class LocationService {
         }catch (NullPointerException e){
             return "Not found";
         }
-        System.out.println("DONE");
+        System.out.println("hey");
+        System.out.println(users.toString());
         return users_at_loc.toString();
     }
 

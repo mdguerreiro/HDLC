@@ -49,7 +49,7 @@ public class WriteRegisterService {
 //            return new WriteRegisterReply();
 //        }
 
-        saveLocationReportLocally(writeRegisterRequest.locationReport);
+        //saveLocationReportLocally(writeRegisterRequest.locationReport);
 
         LOG.info("Submitting Write Register Request ");
         WriteRegisterReply writeRegisterReply = new WriteRegisterReply();

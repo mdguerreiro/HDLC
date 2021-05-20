@@ -1,5 +1,6 @@
 package org.acme.getting.started.resource;
 
+import org.acme.getting.started.LocationService;
 import org.acme.getting.started.WriteRegisterService;
 import org.acme.getting.started.model.WriteRegisterReply;
 import org.acme.getting.started.model.WriteRegisterRequest;
@@ -17,9 +18,13 @@ public class WriteRegisterResource {
     @Inject
     WriteRegisterService writeRegisterService;
 
+    @Inject
+    LocationService locationService;
+
     @POST
     @Path("/")
     public WriteRegisterReply submitWriteRegisterRequest(WriteRegisterRequest wrq) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, UnrecoverableKeyException {
+        locationService.validateLocationReport(wrq.locationReport);
         return writeRegisterService.submitWriteRegisterRequest(wrq);
     }
 }
