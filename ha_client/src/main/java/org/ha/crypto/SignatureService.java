@@ -24,7 +24,7 @@ public class SignatureService {
     final String keyStorePassword = "changeit";
     Util util = new Util();
 
-    private PublicKey getPublicKeyFromKeystore(String username) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
+    public PublicKey getPublicKeyFromKeystore(String username) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
         String keyAlias = username + "keyStore";
         String keyStoreLocation = "keys/" + username + "_key_store.p12";
 
@@ -38,7 +38,7 @@ public class SignatureService {
         return certificate.getPublicKey();
     }
 
-    private PrivateKey getPrivateKeyFromKeystore(String username) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, UnrecoverableKeyException {
+    public PrivateKey getPrivateKeyFromKeystore(String username) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, UnrecoverableKeyException {
         String keyAlias = username + "keyStore";
         String keyStoreLocation = "keys/" + username + "_key_store.p12";
 
