@@ -1,4 +1,4 @@
-package org.acme.crypto;
+package org.ha.crypto;
 
 import io.quarkus.runtime.Startup;
 

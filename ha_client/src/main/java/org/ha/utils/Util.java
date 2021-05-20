@@ -1,4 +1,4 @@
-package org.acme.utils;
+package org.ha.utils;
 
 import java.io.File;
 import java.io.InputStream;
