@@ -1,15 +1,10 @@
 package org.acme.getting.started;
 
-import org.acme.crypto.SignatureService;
 import org.acme.getting.started.model.*;
-import org.acme.getting.started.storage.LocationReportsStorage;
 import org.jboss.logging.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
-import java.security.*;
-import java.security.cert.CertificateException;
 
 @Singleton
 public class ReadRegisterService {
@@ -23,7 +18,6 @@ public class ReadRegisterService {
 
     }
 
-
     public ReadRegisterReply submitReadRegisterRequest(ReadRegisterRequest readRegisterRequest) {
         String myServerName = System.getenv("SERVER_NAME");
         int epoch = readRegisterRequest.epoch;
@@ -31,7 +25,7 @@ public class ReadRegisterService {
 
         LocationReport lr;
         try {
-            lr = (LocationReport) locationService.users.get(username).get(epoch);
+            lr = locationService.users.get(username).get(epoch);
         } catch (NullPointerException e) {
             lr = null;
         }
@@ -40,7 +34,7 @@ public class ReadRegisterService {
         readRegisterReply.senderServerName = myServerName;
         readRegisterReply.ts = locationService.data_ts;
         readRegisterReply.rid = readRegisterRequest.rid;
-        readRegisterReply.map = locationService.users;
+        readRegisterReply.lr = lr;
         LOG.info("READ REQUEST MADE - SENDING REPLY TO READER SERVER");
         return readRegisterReply;
     }

@@ -26,7 +26,7 @@ import java.lang.Boolean;
 @Singleton
 public class LocationService {
     private static final Logger LOG = Logger.getLogger(LocationService.class);
-    protected HashMap<String, HashMap> users;
+    protected HashMap<String, HashMap<Integer, LocationReport>> users;
     protected int data_ts;
     private final ConcurrentHashMap<String, ConcurrentHashMap> noncesOfUser;
     protected int write_timestamp;
@@ -126,17 +126,14 @@ public class LocationService {
         return "Failed";
     }
 
-
-    public void readSync() throws URISyntaxException {
-        HashMap<String, HashMap> map = null;
+    public void readSync(String username, int epoch) throws URISyntaxException {
+        LocationReport locationReport = null;
         int replicasNumber = AppLifecycleBean.location_servers.entrySet().size();
         read_list.clear();
         Iterator serversIterator = AppLifecycleBean.location_servers.entrySet().iterator();
         while (serversIterator.hasNext()) {
-            String myServerName = System.getenv("SERVER_NAME");
             Map.Entry server = (Map.Entry) serversIterator.next();
             String serverUrl = (String) server.getValue();
-
 
             ReadRegisterClient readRegisterClient = RestClientBuilder.newBuilder()
                     .baseUri(new URI(serverUrl))
@@ -144,35 +141,35 @@ public class LocationService {
             ReadRegisterRequest readRegisterRequest = new ReadRegisterRequest(this.rid);
             ReadRegisterReply readRegisterReply = readRegisterClient.submitReadRegisterRequest(readRegisterRequest);
             // TODO Verify signature
-            map = readRegisterReply.map;
-            System.out.println("MAPA CRL");
-            DataVersion dv = new DataVersion(readRegisterReply.ts, map);
-            read_list.add(dv);
+            locationReport = readRegisterReply.lr;
 
+            DataVersion dv = new DataVersion(readRegisterReply.ts, locationReport);
+            read_list.add(dv);
         }
         if(read_list.size() > (replicasNumber + f) / 2){
             int max = 0;
             for(DataVersion elem: read_list){
                 if(elem.getTS() > max){
                     max = elem.getTS();
-                    map = elem.getData();
+                    locationReport = elem.getData();
                 }
             }
             read_list.clear();
         }
 
-        this.users = map;
-
+        HashMap<Integer, LocationReport> locationReportAtEpochHashMap = new HashMap<>();
+        locationReportAtEpochHashMap.put(epoch, locationReport);
+        this.users.put(username, locationReportAtEpochHashMap);
     }
     public String get_location_report(String username, int epoch, String signatureBase64) throws URISyntaxException {
-        readSync();
+        readSync(username, epoch);
         System.out.println("LOCATION REPORT!!");
         System.out.println(users.toString());
         System.out.println("USERNAME " + username);
         System.out.println("EPOCH " + epoch);
         LocationReport lr;
         try{
-            lr = (LocationReport) users.get(username).get(epoch);
+            lr = users.get(username).get(epoch);
         }catch (NullPointerException e){
             return "Not found";
         }
@@ -181,14 +178,14 @@ public class LocationService {
     }
 
     public String get_user_at(int x, int y, int epoch) throws URISyntaxException {
-        readSync();
+        readSync(epoch, username);
         ArrayList<String> users_at_loc = new ArrayList<>();
         LocationReport lr;
         try {
             Iterator it = users.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry pair = (Map.Entry) it.next();
-                lr = (LocationReport) users.get(pair.getKey()).get(epoch);
+                lr = users.get(pair.getKey()).get(epoch);
                 if (lr.x == x && lr.y == y) {
                     users_at_loc.add((String) pair.getKey());
                 }

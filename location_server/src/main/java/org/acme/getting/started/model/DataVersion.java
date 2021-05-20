@@ -1,23 +1,20 @@
 package org.acme.getting.started.model;
 
-import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
-
 public class DataVersion {
 
     private int ts;
-    private HashMap map;
+    private LocationReport locationReport;
 
-    public DataVersion(int ts, HashMap lr){
+    public DataVersion(int ts, LocationReport lr){
         this.ts = ts;
-        this.map = lr;
+        this.locationReport = lr;
     }
 
     public int getTS(){
         return ts;
     }
 
-    public HashMap getData(){
-        return map;
+    public LocationReport getData(){
+        return locationReport;
     }
 }
