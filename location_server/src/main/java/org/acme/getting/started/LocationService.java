@@ -99,10 +99,7 @@ public class LocationService {
                 String serverName = (String) server.getKey();
                 String serverUrl = (String) server.getValue();
 
-                /* TODO FIX SIGNATURE */
-                String signatureBase64 = "TEST";
-//              String signatureBase64 = signatureService.generateSha256WithRSASignatureForWriteRegister(serverName, lr);
-
+                String signatureBase64 = signatureService.generateSha256WithRSASignatureForWriteRequest(myServerName, lr);
 
                 WriteRegisterClient writeRegisterClient = RestClientBuilder.newBuilder()
                         .baseUri(new URI(serverUrl))
@@ -110,6 +107,14 @@ public class LocationService {
                 WriteRegisterRequest writerRegisterRequest = new WriteRegisterRequest(lr, signatureBase64, myServerName,
                         this.write_timestamp);
                 WriteRegisterReply writeRegisterReply = writeRegisterClient.submitWriteRegisterRequest(writerRegisterRequest);
+
+                boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForWriteReply(
+                        serverName, writeRegisterReply.acknowledgment, writeRegisterReply.ts, writeRegisterReply.signatureBase64);
+
+                if(!isSignatureCorrect) {
+                    LOG.info("WRITE REGISTER: Signature Validation of write reply Failed. We shall treat this as faulty behavior. Acknowledgment rejected");
+                    continue; // Ignore the acknowledgment
+                }
 
                 if (writeRegisterReply.acknowledgment.equals("true")) {
                     acknowledgments++;
@@ -120,9 +125,7 @@ public class LocationService {
                     return "Submitted";
                 }
             }
-
         }
-
         return "Failed";
     }
 

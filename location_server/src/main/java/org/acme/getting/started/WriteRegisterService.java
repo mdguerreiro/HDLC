@@ -29,19 +29,23 @@ public class WriteRegisterService {
 
 
     public WriteRegisterReply replyWriteRegisterWithSignature(WriteRegisterReply writeRegisterReply) throws UnrecoverableKeyException, CertificateException, KeyStoreException, NoSuchAlgorithmException, IOException, SignatureException, InvalidKeyException {
+        String myServerName = System.getenv("SERVER_NAME");
+
+        String signatureBase64 = signatureService.generateSha256WithRSASignatureForWriteReply(myServerName, writeRegisterReply.acknowledgment, writeRegisterReply.ts);
+        writeRegisterReply.signatureBase64 = signatureBase64;
         return writeRegisterReply;
     }
 
     public WriteRegisterReply submitWriteRegisterRequest(WriteRegisterRequest writeRegisterRequest) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, UnrecoverableKeyException {
-//        boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForWriteRegister(
-//                writeRegisterRequest.senderServerName, writeRegisterRequest.locationReport, writeRegisterRequest.signatureBase64);
-//
-//        if(!isSignatureCorrect) {
-//            LOG.info("Signature Validation Failed. Aborting");
-//            WriteRegisterReply writeRegisterReply = new WriteRegisterReply();
-//            writeRegisterReply.acknowledgment = "false";
-//            return new WriteRegisterReply();
-//        }
+        boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForWriteRequest(
+                writeRegisterRequest.senderServerName, writeRegisterRequest.locationReport, writeRegisterRequest.signatureBase64);
+
+        if(!isSignatureCorrect) {
+            LOG.info("Signature Validation Failed. Aborting");
+            WriteRegisterReply writeRegisterReply = new WriteRegisterReply();
+            writeRegisterReply.acknowledgment = "false";
+            return new WriteRegisterReply();
+        }
 
         if(writeRegisterRequest.wts > locationService.data_ts){
             locationService.data_ts = writeRegisterRequest.wts;
