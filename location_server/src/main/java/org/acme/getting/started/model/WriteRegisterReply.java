@@ -7,6 +7,7 @@ public class WriteRegisterReply implements Serializable {
     public String signatureBase64;
     public String senderServerName;
     public String acknowledgment;
+    public int ts;
 
     public WriteRegisterReply(){
 
@@ -17,5 +18,6 @@ public class WriteRegisterReply implements Serializable {
         this.signatureBase64 = signatureBase64;
         this.senderServerName = senderServerName;
         this.acknowledgment = acknowledgment;
+        this.ts = ts;
     }
 }

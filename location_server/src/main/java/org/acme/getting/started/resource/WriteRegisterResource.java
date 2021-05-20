@@ -18,13 +18,11 @@ public class WriteRegisterResource {
     @Inject
     WriteRegisterService writeRegisterService;
 
-    @Inject
-    LocationService locationService;
+
 
     @POST
     @Path("/")
     public WriteRegisterReply submitWriteRegisterRequest(WriteRegisterRequest wrq) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, UnrecoverableKeyException {
-        locationService.validateLocationReport(wrq.locationReport);
         return writeRegisterService.submitWriteRegisterRequest(wrq);
     }
 }

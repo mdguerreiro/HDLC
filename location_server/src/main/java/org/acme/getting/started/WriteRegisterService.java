@@ -20,6 +20,9 @@ public class WriteRegisterService {
     @Inject
     SignatureService signatureService;
 
+    @Inject
+    LocationService locationService;
+
     public WriteRegisterService() {
 
     }
@@ -49,7 +52,10 @@ public class WriteRegisterService {
 //            return new WriteRegisterReply();
 //        }
 
-        //saveLocationReportLocally(writeRegisterRequest.locationReport);
+        if(writeRegisterRequest.wts > locationService.data_ts){
+            locationService.data_ts = writeRegisterRequest.wts;
+            locationService.validateLocationReport(writeRegisterRequest.locationReport);
+        }
 
         LOG.info("Submitting Write Register Request ");
         WriteRegisterReply writeRegisterReply = new WriteRegisterReply();
