@@ -40,7 +40,7 @@ public class LocationResource {
 
     @POST
     @Path("/obtain")
-    public String obtainLocationReport(LocationRequest lr) {
+    public String obtainLocationReport(LocationRequest lr) throws URISyntaxException {
         // @TODO: LOG INFO
         System.out.println("RECEIVED LOCATION REQUEST");
         return service.get_location_report(lr.username, lr.epoch, lr.signatureBase64);
@@ -49,7 +49,7 @@ public class LocationResource {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     @Path("/{x}/{y}/{epoch}")
-    public String obtainUsersAtLocation(@PathParam("x") String x, @PathParam("y") String y, @PathParam("epoch") String epoch) {
+    public String obtainUsersAtLocation(@PathParam("x") String x, @PathParam("y") String y, @PathParam("epoch") String epoch) throws URISyntaxException {
         // @TODO: LOG INFO
         return service.get_user_at(Integer.parseInt(x), Integer.parseInt(y), Integer.parseInt(epoch));
     }

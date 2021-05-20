@@ -1,5 +1,6 @@
 package org.acme.getting.started.resource;
 
+import org.acme.getting.started.LocationService;
 import org.acme.getting.started.WriteRegisterService;
 import org.acme.getting.started.model.WriteRegisterReply;
 import org.acme.getting.started.model.WriteRegisterRequest;
@@ -11,11 +12,13 @@ import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
 
-@Path("/register")
+@Path("/register/write")
 public class WriteRegisterResource {
 
     @Inject
     WriteRegisterService writeRegisterService;
+
+
 
     @POST
     @Path("/")

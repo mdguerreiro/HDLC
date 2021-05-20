@@ -7,11 +7,11 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
-@Path("/register")
+@Path("/register/write")
 @RegisterRestClient
 public interface WriteRegisterClient {
 
     @POST
     @Path("/")
-    WriteRegisterReply submitWriteRegisterRequest(WriteRegisterRequest writeRegiterRequest);
+    WriteRegisterReply submitWriteRegisterRequest(WriteRegisterRequest writeRegisterRequest);
 }
