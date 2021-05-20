@@ -2,7 +2,7 @@ package org.ha.getting.started.model;
 import java.io.Serializable;
 
 
-class ObtainLocationReportRequest implements Serializable {
+public class ObtainLocationRequest implements Serializable {
 
     String userId;
     int epoch;
@@ -10,7 +10,7 @@ class ObtainLocationReportRequest implements Serializable {
     String haSignature;
 
 
-    public ObtainLocationReportRequest(String userId, int epoch, String haId, String haSignature){
+    public ObtainLocationRequest(String userId, int epoch, String haId, String haSignature){
 
         this.userId = userId;
         this.epoch = epoch;
@@ -18,6 +18,26 @@ class ObtainLocationReportRequest implements Serializable {
         this.haSignature = "unsgined";
     }
 
+
+    public String getUserId(){
+        return userId;
+    }
+    public int getEpoch(){
+        return epoch;
+    }
+
+    public String getHaId(){
+        return haId;
+    }
+
+    public String getHaSignature(){
+        return haSignature;
+    }
+
+
+    public void setSignature(String base64Signature){
+        this.haSignature = base64Signature;
+    }
 
 
 }
