@@ -1,8 +1,8 @@
 package org.ha.getting.started.model;
+import java.io.Serializable;
 
 
-class ObtainLocationReportRequest implements
-{
+class ObtainLocationReportRequest implements Serializable {
 
     String userId;
     int epoch;

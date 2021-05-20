@@ -1,8 +1,8 @@
-package org.ha.lifecycle;pto;
+package org.ha.lifecycle.pto;
 
 import io.quarkus.runtime.Startup;
 
-import org.acme.utils.Util;
+import org.ha.utils.Util;
 import org.jboss.logging.Logger;
 
 import javax.inject.Singleton;
@@ -20,7 +20,6 @@ import javax.enterprise.event.Observes;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
-import org.acme.getting.started.Location;
 import org.jboss.logging.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -43,12 +42,12 @@ public class AppLifecycleBean {
 
     void onStart(@Observes StartupEvent ev) {
         LOGGER.info("The application is starting...");
-        System.out.println("Working Directory = " + System.getProperty("user.dir"));
-        LOGGER.info("Loading users/hosts info file...");
-        load_json_users();
-        load_json_grid();
-        LOGGER.info("Loading bluetooth grid emulator...");
-        LOGGER.info("Loading epoch time clock...");
+        //System.out.println("Working Directory = " + System.getProperty("user.dir"));
+        //LOGGER.info("Loading users/hosts info file...");
+        //load_json_users();
+        //load_json_grid();
+        //LOGGER.info("Loading bluetooth grid emulator...");
+        //LOGGER.info("Loading epoch time clock...");
     }
 
     void onStop(@Observes ShutdownEvent ev) {

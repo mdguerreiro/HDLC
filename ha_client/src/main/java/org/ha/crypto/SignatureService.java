@@ -2,7 +2,7 @@ package org.ha.crypto;
 
 import io.quarkus.runtime.Startup;
 
-import org.acme.utils.Util;
+import org.ha.utils.Util;
 import org.jboss.logging.Logger;
 
 import javax.inject.Singleton;
@@ -14,6 +14,8 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Base64;
+
+import org.ha.getting.started.model.*;
 
 @Startup
 @Singleton
