@@ -112,7 +112,7 @@ public class LocationService {
                         serverName, writeRegisterReply.acknowledgment, writeRegisterReply.ts, writeRegisterReply.signatureBase64);
 
                 if(!isSignatureCorrect) {
-                    LOG.info("WRITE REGISTER: Signature Validation of write reply Failed. We shall treat this as faulty behavior. Acknowledgment rejected");
+                    LOG.info("WRITE REGISTER REQUEST: Signature Validation of write reply Failed. We shall treat this as faulty behavior. Acknowledgment rejected");
                     continue; // Ignore the acknowledgment
                 }
 
@@ -129,21 +129,33 @@ public class LocationService {
         return "Failed";
     }
 
-    public void readSync(String username, int epoch) throws URISyntaxException {
+    public void readSync(String username, int epoch) throws URISyntaxException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
         LocationReport locationReport = null;
         int replicasNumber = AppLifecycleBean.location_servers.entrySet().size();
         read_list.clear();
         Iterator serversIterator = AppLifecycleBean.location_servers.entrySet().iterator();
         while (serversIterator.hasNext()) {
             Map.Entry server = (Map.Entry) serversIterator.next();
+            String serverName = (String) server.getKey();
             String serverUrl = (String) server.getValue();
+
+            String myServerName = System.getenv("SERVER_NAME");
+            String signatureBase64 = signatureService.generateSha256WithRSASignatureForReadRequest(myServerName, this.rid);
 
             ReadRegisterClient readRegisterClient = RestClientBuilder.newBuilder()
                     .baseUri(new URI(serverUrl))
                     .build(ReadRegisterClient.class);
-            ReadRegisterRequest readRegisterRequest = new ReadRegisterRequest(this.rid);
+            ReadRegisterRequest readRegisterRequest = new ReadRegisterRequest(this.rid, myServerName, signatureBase64);
             ReadRegisterReply readRegisterReply = readRegisterClient.submitReadRegisterRequest(readRegisterRequest);
-            // TODO Verify signature
+
+            boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForReadReply(
+                    serverName, readRegisterReply.ts, readRegisterReply.rid, readRegisterReply.signatureBase64);
+
+            if(!isSignatureCorrect) {
+                LOG.info("READ REGISTER REQUEST: Signature Validation of read reply Failed. We shall treat this as faulty behavior. Acknowledgment rejected");
+                continue; // Ignore the acknowledgment
+            }
+
             locationReport = readRegisterReply.lr;
 
             DataVersion dv = new DataVersion(readRegisterReply.ts, locationReport);
@@ -164,7 +176,7 @@ public class LocationService {
         locationReportAtEpochHashMap.put(epoch, locationReport);
         this.users.put(username, locationReportAtEpochHashMap);
     }
-    public String get_location_report(String username, int epoch, String signatureBase64) throws URISyntaxException {
+    public String get_location_report(String username, int epoch, String signatureBase64) throws URISyntaxException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
         readSync(username, epoch);
         System.out.println("LOCATION REPORT!!");
         System.out.println(users.toString());
@@ -180,8 +192,8 @@ public class LocationService {
         return String.format("User %s was at location x:%s y:%s", lr.username, lr.x, lr.y);
     }
 
-    public String get_user_at(int x, int y, int epoch) throws URISyntaxException {
-//        readSync(epoch, username);
+    public String get_user_at(int x, int y, int epoch) throws URISyntaxException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
+//        readSync(username, epoch);
         ArrayList<String> users_at_loc = new ArrayList<>();
         LocationReport lr;
         try {

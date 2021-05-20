@@ -60,7 +60,7 @@ public class SignatureService {
     }
 
     public boolean verifySha256WithRSASignatureForWriteRequest(String serverName, LocationReport locationReport, String receivedSignatureBase64) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException {
-        LOG.info(String.format("WRITE REGISTER: Validating Sha256 with RSA Signature for write register"));
+        LOG.info(String.format("WRITE REGISTER REQUEST: Validating Sha256 with RSA Signature for write register"));
 
         PublicKey publicKey = CryptoKeysUtil.getPublicKeyFromKeystore(serverName);
 
@@ -76,16 +76,16 @@ public class SignatureService {
         boolean isValidSignature = signature.verify(receivedSignature);
 
         if(isValidSignature) {
-            LOG.info("WRITE REGISTER: Signature Validation was performed successfully. Signature is valid");
+            LOG.info("WRITE REGISTER REQUEST: Signature Validation was performed successfully. Signature is valid");
         } else {
-            LOG.info("WRITE REGISTER: Signature Validation failed. Signature is invalid");
+            LOG.info("WRITE REGISTER REQUEST: Signature Validation failed. Signature is invalid");
         }
 
         return isValidSignature;
     }
 
     public String generateSha256WithRSASignatureForWriteRequest(String serverName, LocationReport locationReport) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, IOException, CertificateException, InvalidKeyException, SignatureException {
-        LOG.info(String.format("WRITE REGISTER: Generating Sha256 with RSA Signature"));
+        LOG.info(String.format("WRITE REGISTER REQUEST: Generating Sha256 with RSA Signature"));
 
         PrivateKey privateKey = CryptoKeysUtil.getPrivateKeyFromKeystore(serverName);
         Signature signature = Signature.getInstance("SHA256withRSA");
@@ -141,4 +141,81 @@ public class SignatureService {
         return isValidSignature;
     }
 
+    public String generateSha256WithRSASignatureForReadRequest(String serverName, int rid) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException, UnrecoverableKeyException {
+        LOG.info(String.format("READ REGISTER REQUEST: Generating Sha256 with RSA Signature"));
+
+        PrivateKey privateKey = CryptoKeysUtil.getPrivateKeyFromKeystore(serverName);
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initSign(privateKey);
+
+        signature.update(serverName.getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(rid).getBytes(StandardCharsets.UTF_8));
+
+        byte[] signatureByteArray = signature.sign();
+
+        return java.util.Base64.getEncoder().encodeToString(signatureByteArray);
+    }
+
+    public boolean verifySha256WithRSASignatureForReadRequest(String serverName, int rid, String receivedSignatureBase64) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException {
+        LOG.info(String.format("READ REGISTER REQUEST: Validating Sha256 with RSA Signature for read register"));
+
+        PublicKey publicKey = CryptoKeysUtil.getPublicKeyFromKeystore(serverName);
+
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initVerify(publicKey);
+
+        signature.update(serverName.getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(rid).getBytes(StandardCharsets.UTF_8));
+
+        byte[] receivedSignature = Base64.decodeBase64(receivedSignatureBase64);
+        boolean isValidSignature = signature.verify(receivedSignature);
+
+        if(isValidSignature) {
+            LOG.info("READ REGISTER REQUEST: Signature Validation was performed successfully. Signature is valid");
+        } else {
+            LOG.info("READ REGISTER REQUEST: Signature Validation failed. Signature is invalid");
+        }
+
+        return isValidSignature;
+    }
+
+    public String generateSha256WithRSASignatureForReadReply(String serverName, int ts, int rid) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException, UnrecoverableKeyException {
+        LOG.info(String.format("READ REGISTER REPLY: Generating Sha256 with RSA Signature"));
+
+        PrivateKey privateKey = CryptoKeysUtil.getPrivateKeyFromKeystore(serverName);
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initSign(privateKey);
+
+        signature.update(serverName.getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(ts).getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(rid).getBytes(StandardCharsets.UTF_8));
+
+        byte[] signatureByteArray = signature.sign();
+
+        return java.util.Base64.getEncoder().encodeToString(signatureByteArray);
+    }
+
+    public boolean verifySha256WithRSASignatureForReadReply(String serverName, int ts, int rid, String receivedSignatureBase64) throws NoSuchAlgorithmException, KeyStoreException, IOException, InvalidKeyException, CertificateException, SignatureException, UnrecoverableKeyException {
+        LOG.info(String.format("READ REGISTER REPLY: Validating Sha256 with RSA Signature for read register reply"));
+
+        PublicKey publicKey = CryptoKeysUtil.getPublicKeyFromKeystore(serverName);
+
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initVerify(publicKey);
+
+        signature.update(serverName.getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(ts).getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(rid).getBytes(StandardCharsets.UTF_8));
+
+        byte[] receivedSignature = Base64.decodeBase64(receivedSignatureBase64);
+        boolean isValidSignature = signature.verify(receivedSignature);
+
+        if(isValidSignature) {
+            LOG.info("READ REGISTER REQUEST: Signature Validation was performed successfully. Signature is valid");
+        } else {
+            LOG.info("READ REGISTER REQUEST: Signature Validation failed. Signature is invalid");
+        }
+
+        return isValidSignature;
+    }
 }

@@ -27,7 +27,6 @@ public class WriteRegisterService {
 
     }
 
-
     public WriteRegisterReply replyWriteRegisterWithSignature(WriteRegisterReply writeRegisterReply) throws UnrecoverableKeyException, CertificateException, KeyStoreException, NoSuchAlgorithmException, IOException, SignatureException, InvalidKeyException {
         String myServerName = System.getenv("SERVER_NAME");
 
@@ -41,7 +40,7 @@ public class WriteRegisterService {
                 writeRegisterRequest.senderServerName, writeRegisterRequest.locationReport, writeRegisterRequest.signatureBase64);
 
         if(!isSignatureCorrect) {
-            LOG.info("Signature Validation Failed. Aborting");
+            LOG.info("WRITE REGISTER REPLY: Signature Validation Failed. Aborting");
             WriteRegisterReply writeRegisterReply = new WriteRegisterReply();
             writeRegisterReply.acknowledgment = "false";
             return new WriteRegisterReply();

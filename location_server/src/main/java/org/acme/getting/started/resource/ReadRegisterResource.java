@@ -22,7 +22,7 @@ public class ReadRegisterResource {
 
     @POST
     @Path("/")
-    public ReadRegisterReply submitReadRegisterRequest(ReadRegisterRequest rrq){
+    public ReadRegisterReply submitReadRegisterRequest(ReadRegisterRequest rrq) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
         return readRegisterService.submitReadRegisterRequest(rrq);
     }
 }
