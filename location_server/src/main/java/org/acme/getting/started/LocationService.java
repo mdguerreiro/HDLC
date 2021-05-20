@@ -58,7 +58,7 @@ public class LocationService {
             }
         }
         LOG.info("Number of approved " + counter);
-        if(counter >= ((3 * f + 1) - f)){
+        if(counter >= (f+1)){
             LOG.info("There is byzantine consensus, request was approved.");
             location_reports.put(lr.epoch, lr);
             users.put(lr.username, location_reports);
