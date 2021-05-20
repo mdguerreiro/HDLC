@@ -81,11 +81,14 @@ public class LocationService {
     }
 
     public String submit_location_report(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, URISyntaxException, UnrecoverableKeyException {
-       // String locationReportValidationResult = validateLocationReport(lr);
-
-        //if (!locationReportValidationResult.equals("Submitted")) {
-       //     return locationReportValidationResult; // Do not send location report to replicas if val. result is failed
-        //}
+        /** If Writer does not submit location report locally,
+         *  Then it should broadcast it to replicas
+         *  Otherwise we get inconsistency **/
+        String locationReportValidationResult = validateLocationReport(lr);
+        if (!locationReportValidationResult.equals("Submitted")) {
+            LOG.info("Location Report Validation Failed: Broadcast to replicas is interrupted");
+            return locationReportValidationResult; // Do not send location report to replicas if val. result is failed
+        }
 
         String isWriter = System.getenv("IS_WRITER");
         if (isWriter.equals("true")) {
@@ -177,7 +180,7 @@ public class LocationService {
         this.users.put(username, locationReportAtEpochHashMap);
     }
     public String get_location_report(String username, int epoch, String signatureBase64) throws URISyntaxException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
-        readSync(username, epoch);
+//        readSync(username, epoch);
         System.out.println("LOCATION REPORT!!");
         System.out.println(users.toString());
         System.out.println("USERNAME " + username);
