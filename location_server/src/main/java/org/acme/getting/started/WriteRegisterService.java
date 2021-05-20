@@ -35,7 +35,7 @@ public class WriteRegisterService {
     public WriteRegisterReply submitWriteRegisterRequest(WriteRegisterRequest writeRegisterRequest) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, UnrecoverableKeyException {
 //        boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForWriteRegister(
 //                writeRegisterRequest.senderServerName, writeRegisterRequest.locationReport, writeRegisterRequest.signatureBase64);
-
+//
 //        if(!isSignatureCorrect) {
 //            LOG.info("Signature Validation Failed. Aborting");
 //            WriteRegisterReply writeRegisterReply = new WriteRegisterReply();

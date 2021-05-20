@@ -178,7 +178,7 @@ public class LocationService {
     }
 
     public String get_user_at(int x, int y, int epoch) throws URISyntaxException {
-        readSync(epoch, username);
+//        readSync(epoch, username);
         ArrayList<String> users_at_loc = new ArrayList<>();
         LocationReport lr;
         try {
