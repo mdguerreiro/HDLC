@@ -2,11 +2,13 @@ package org.acme.getting.started;
 
 import org.acme.crypto.SignatureService;
 import org.acme.getting.started.model.*;
+import org.acme.getting.started.resource.ReadRegisterClient;
 import org.acme.getting.started.resource.WriteRegisterClient;
 import org.acme.getting.started.resource.WriteRegisterResource;
 import org.acme.getting.started.storage.LocationReportsStorage;
 import org.acme.lifecycle.AppLifecycleBean;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
+import org.glassfish.json.JsonUtil;
 import org.jboss.logging.Logger;
 
 import javax.inject.Inject;
@@ -16,9 +18,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.*;
 import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.lang.Integer;
 import java.lang.Boolean;
@@ -26,21 +26,24 @@ import java.lang.Boolean;
 @Singleton
 public class LocationService {
     private static final Logger LOG = Logger.getLogger(LocationService.class);
-    private final ConcurrentHashMap<String, ConcurrentHashMap> users;
+    protected HashMap<String, HashMap> users;
     protected int data_ts;
     private final ConcurrentHashMap<String, ConcurrentHashMap> noncesOfUser;
     protected int write_timestamp;
+    protected int rid;
+    protected List<DataVersion> read_list;
     private int f;
+
     @Inject
     SignatureService signatureService;
 
     public LocationService() {
-        this.users = new ConcurrentHashMap<>();
+        this.users = new HashMap<>();
         this.noncesOfUser = new ConcurrentHashMap<>();
         this.write_timestamp = 0;
         this.data_ts = 0;
         this.f = Integer.parseInt(System.getenv("BYZANTINE_USERS"));
-
+        this.read_list = new ArrayList<>();
     }
 
     public String validateLocationReport(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
@@ -50,7 +53,7 @@ public class LocationService {
         }
         addUserNonce(lr.username, lr.nonce);
 
-        ConcurrentHashMap<Integer, LocationReport> location_reports = new ConcurrentHashMap<>();
+        HashMap<Integer, LocationReport> location_reports = new HashMap<>();
         LOG.info(String.format("Received location report submission from %s at epoch %d - checking validity, %d - nonce", lr.username, lr.epoch, lr.nonce));
         boolean isSignatureCorrect = signatureService.verifySha256WithRSASignature(lr.username, lr.epoch, lr.x, lr.y, lr.replies, lr.signatureBase64);
 
@@ -78,11 +81,11 @@ public class LocationService {
     }
 
     public String submit_location_report(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, URISyntaxException, UnrecoverableKeyException {
-        String locationReportValidationResult = validateLocationReport(lr);
+       // String locationReportValidationResult = validateLocationReport(lr);
 
-        if (!locationReportValidationResult.equals("Submitted")) {
-            return locationReportValidationResult; // Do not send location report to replicas if val. result is failed
-        }
+        //if (!locationReportValidationResult.equals("Submitted")) {
+       //     return locationReportValidationResult; // Do not send location report to replicas if val. result is failed
+        //}
 
         String isWriter = System.getenv("IS_WRITER");
         if (isWriter.equals("true")) {
@@ -114,34 +117,77 @@ public class LocationService {
 
                 if (acknowledgments > (replicasNumber + f) / 2) {
                     LOG.info("LOCATION SERVER: " + myServerName + " got acknowledgments from quorum replicas. Sending reply");
-                    return locationReportValidationResult;
+                    return "Submitted";
                 }
             }
 
         }
 
-        return locationReportValidationResult;
+        return "Failed";
     }
 
-    public String get_location_report(String username, int epoch, String signatureBase64) {
+
+    public void readSync() throws URISyntaxException {
+        HashMap<String, HashMap> map = null;
+        int replicasNumber = AppLifecycleBean.location_servers.entrySet().size();
+        read_list.clear();
+        Iterator serversIterator = AppLifecycleBean.location_servers.entrySet().iterator();
+        while (serversIterator.hasNext()) {
+            String myServerName = System.getenv("SERVER_NAME");
+            Map.Entry server = (Map.Entry) serversIterator.next();
+            String serverUrl = (String) server.getValue();
+
+
+            ReadRegisterClient readRegisterClient = RestClientBuilder.newBuilder()
+                    .baseUri(new URI(serverUrl))
+                    .build(ReadRegisterClient.class);
+            ReadRegisterRequest readRegisterRequest = new ReadRegisterRequest(this.rid);
+            ReadRegisterReply readRegisterReply = readRegisterClient.submitReadRegisterRequest(readRegisterRequest);
+            // TODO Verify signature
+            map = readRegisterReply.map;
+            System.out.println("MAPA CRL");
+            DataVersion dv = new DataVersion(readRegisterReply.ts, map);
+            read_list.add(dv);
+
+        }
+        if(read_list.size() > (replicasNumber + f) / 2){
+            int max = 0;
+            for(DataVersion elem: read_list){
+                if(elem.getTS() > max){
+                    max = elem.getTS();
+                    map = elem.getData();
+                }
+            }
+            read_list.clear();
+        }
+
+        this.users = map;
+
+    }
+    public String get_location_report(String username, int epoch, String signatureBase64) throws URISyntaxException {
+        readSync();
+        System.out.println("LOCATION REPORT!!");
+        System.out.println(users.toString());
         System.out.println("USERNAME " + username);
         System.out.println("EPOCH " + epoch);
         LocationReport lr;
-        try {
+        try{
             lr = (LocationReport) users.get(username).get(epoch);
-        } catch (NullPointerException e) {
+        }catch (NullPointerException e){
             return "Not found";
         }
+        System.out.println("DONE");
         return String.format("User %s was at location x:%s y:%s", lr.username, lr.x, lr.y);
     }
 
-    public String get_user_at(int x, int y, int epoch) {
+    public String get_user_at(int x, int y, int epoch) throws URISyntaxException {
+        readSync();
         ArrayList<String> users_at_loc = new ArrayList<>();
         LocationReport lr;
         try {
             Iterator it = users.entrySet().iterator();
             while (it.hasNext()) {
-                ConcurrentHashMap.Entry pair = (ConcurrentHashMap.Entry) it.next();
+                Map.Entry pair = (Map.Entry) it.next();
                 lr = (LocationReport) users.get(pair.getKey()).get(epoch);
                 if (lr.x == x && lr.y == y) {
                     users_at_loc.add((String) pair.getKey());
@@ -150,8 +196,6 @@ public class LocationService {
         } catch (NullPointerException e) {
             return "Not found";
         }
-        System.out.println("WRITE TS " +  write_timestamp);
-        System.out.println("TS " +  data_ts);
 
         return users_at_loc.toString();
     }

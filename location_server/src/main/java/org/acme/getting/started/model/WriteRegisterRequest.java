@@ -7,8 +7,8 @@ public class WriteRegisterRequest implements Serializable {
     public String signatureBase64;
     public String senderServerName;
     public int wts;
-    public WriteRegisterRequest(){
 
+    public WriteRegisterRequest(){
     }
 
     public WriteRegisterRequest(LocationReport locationReport, String signatureBase64, String senderServerName, int wts){

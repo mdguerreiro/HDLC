@@ -27,17 +27,8 @@ public class WriteRegisterService {
 
     }
 
-    private void saveLocationReportLocally(LocationReport locationReport) {
-        String myServerName = System.getenv("SERVER_NAME");
-        LOG.info("SAVE LOCATION REPORT - server: " + myServerName + ", epoch: " + locationReport.epoch);
-        LocationReportsStorage.locationReports.put(locationReport.epoch, locationReport);
-    }
 
     public WriteRegisterReply replyWriteRegisterWithSignature(WriteRegisterReply writeRegisterReply) throws UnrecoverableKeyException, CertificateException, KeyStoreException, NoSuchAlgorithmException, IOException, SignatureException, InvalidKeyException {
-        String myServerName = System.getenv("SERVER_NAME");
-
-        String signatureBase64 = signatureService.generateSha256WithRSASignatureForWriteReply(myServerName, writeRegisterReply.acknowledgment);
-        writeRegisterReply.signatureBase64 = signatureBase64;
         return writeRegisterReply;
     }
 
@@ -58,8 +49,8 @@ public class WriteRegisterService {
         }
 
         LOG.info("Submitting Write Register Request ");
-        WriteRegisterReply writeRegisterReply = new WriteRegisterReply();
-        writeRegisterReply.acknowledgment = "true";
+        WriteRegisterReply writeRegisterReply = new WriteRegisterReply("true", writeRegisterRequest.wts);
+
         return replyWriteRegisterWithSignature(writeRegisterReply);
     }
 }

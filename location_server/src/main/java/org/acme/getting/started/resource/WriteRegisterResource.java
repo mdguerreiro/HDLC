@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
 
-@Path("/register")
+@Path("/register/write")
 public class WriteRegisterResource {
 
     @Inject
