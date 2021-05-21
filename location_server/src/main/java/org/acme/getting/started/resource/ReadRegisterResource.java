@@ -22,8 +22,14 @@ public class ReadRegisterResource {
 
     @POST
     @Path("/")
-    public ReadRegisterReply submitReadRegisterRequest(ReadRegisterRequest rrq) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
-        return readRegisterService.submitReadRegisterRequest(rrq);
+    public ReadRegisterReply submitReadRegisterRequestToGetLocationReport(ReadRegisterRequest rrq) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
+        return readRegisterService.submitReadRegisterRequestToGetLocationReport(rrq);
+    }
+
+    @POST
+    @Path("/get-at")
+    public ReadRegisterReply submitReadRegisterRequestToGetUsersAtPosition(ReadRegisterRequest rrq) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
+        return readRegisterService.submitReadRegisterRequestToGetUsersAtPosition(rrq);
     }
 }
 

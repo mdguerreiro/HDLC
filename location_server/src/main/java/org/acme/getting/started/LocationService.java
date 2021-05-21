@@ -4,16 +4,15 @@ import org.acme.crypto.SignatureService;
 import org.acme.getting.started.model.*;
 import org.acme.getting.started.resource.ReadRegisterClient;
 import org.acme.getting.started.resource.WriteRegisterClient;
-import org.acme.getting.started.resource.WriteRegisterResource;
 import org.acme.getting.started.storage.LocationReportsStorage;
 import org.acme.lifecycle.AppLifecycleBean;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
-import org.glassfish.json.JsonUtil;
 import org.jboss.logging.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.*;
@@ -26,24 +25,25 @@ import java.lang.Boolean;
 @Singleton
 public class LocationService {
     private static final Logger LOG = Logger.getLogger(LocationService.class);
-    protected HashMap<String, HashMap<Integer, LocationReport>> users;
     protected int data_ts;
     private final ConcurrentHashMap<String, ConcurrentHashMap> noncesOfUser;
     protected int write_timestamp;
     protected int rid;
     protected List<DataVersion> read_list;
+    protected List<DataVersionForUsersAtPosition> read_list_for_users_at_pos;
     private int f;
 
     @Inject
     SignatureService signatureService;
 
     public LocationService() {
-        this.users = new HashMap<>();
+        LocationReportsStorage.users = new HashMap<>();
         this.noncesOfUser = new ConcurrentHashMap<>();
         this.write_timestamp = 0;
         this.data_ts = 0;
         this.f = Integer.parseInt(System.getenv("BYZANTINE_USERS"));
         this.read_list = new ArrayList<>();
+        this.read_list_for_users_at_pos = new ArrayList<>();
     }
 
     public String validateLocationReport(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
@@ -72,7 +72,7 @@ public class LocationService {
         if (counter >= (f + 1)) {
             LOG.info("There is byzantine consensus, request was approved.");
             location_reports.put(lr.epoch, lr);
-            users.put(lr.username, location_reports);
+            LocationReportsStorage.users.put(lr.username, location_reports);
             return "Submitted";
         } else {
             LOG.info("There isn't byzantine consensus, request was denied.");
@@ -132,7 +132,37 @@ public class LocationService {
         return "Failed";
     }
 
-    public void readSync(String username, int epoch) throws URISyntaxException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
+    private LocationReport getMostRecentLocationReport(int replicasNumber) {
+        LocationReport locationReport = null;
+        if(read_list.size() > (replicasNumber + f) / 2){
+            int max = 0;
+            for(DataVersion elem: read_list){
+                if(elem.getTS() > max){
+                    max = elem.getTS();
+                    locationReport = elem.getData();
+                }
+            }
+            read_list.clear();
+        }
+        return locationReport;
+    }
+
+    private ArrayList<String> getMostRecentUsersAtPosition(int replicasNumber) {
+        ArrayList<String> usersAtPosition = null;
+        if(read_list_for_users_at_pos.size() > (replicasNumber + f) / 2){
+            int max = 0;
+            for(DataVersionForUsersAtPosition elem: read_list_for_users_at_pos){
+                if(elem.getTS() > max){
+                    max = elem.getTS();
+                    usersAtPosition = elem.getData();
+                }
+            }
+            read_list_for_users_at_pos.clear();
+        }
+        return usersAtPosition;
+    }
+
+    public LocationReport readSyncToGetLocationReport(int epoch, String username) throws URISyntaxException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
         LocationReport locationReport = null;
         int replicasNumber = AppLifecycleBean.location_servers.entrySet().size();
         read_list.clear();
@@ -141,15 +171,14 @@ public class LocationService {
             Map.Entry server = (Map.Entry) serversIterator.next();
             String serverName = (String) server.getKey();
             String serverUrl = (String) server.getValue();
-
             String myServerName = System.getenv("SERVER_NAME");
             String signatureBase64 = signatureService.generateSha256WithRSASignatureForReadRequest(myServerName, this.rid);
 
             ReadRegisterClient readRegisterClient = RestClientBuilder.newBuilder()
                     .baseUri(new URI(serverUrl))
                     .build(ReadRegisterClient.class);
-            ReadRegisterRequest readRegisterRequest = new ReadRegisterRequest(this.rid, myServerName, signatureBase64);
-            ReadRegisterReply readRegisterReply = readRegisterClient.submitReadRegisterRequest(readRegisterRequest);
+            ReadRegisterRequest readRegisterRequest = new ReadRegisterRequest(this.rid, myServerName, username, signatureBase64);
+            ReadRegisterReply readRegisterReply = readRegisterClient.submitReadRegisterRequestToGetLocationReport(readRegisterRequest);
 
             boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForReadReply(
                     serverName, readRegisterReply.ts, readRegisterReply.rid, readRegisterReply.signatureBase64);
@@ -164,57 +193,81 @@ public class LocationService {
             DataVersion dv = new DataVersion(readRegisterReply.ts, locationReport);
             read_list.add(dv);
         }
-        if(read_list.size() > (replicasNumber + f) / 2){
-            int max = 0;
-            for(DataVersion elem: read_list){
-                if(elem.getTS() > max){
-                    max = elem.getTS();
-                    locationReport = elem.getData();
-                }
-            }
-            read_list.clear();
-        }
+
+        locationReport = getMostRecentLocationReport(replicasNumber);
 
         HashMap<Integer, LocationReport> locationReportAtEpochHashMap = new HashMap<>();
         locationReportAtEpochHashMap.put(epoch, locationReport);
-        this.users.put(username, locationReportAtEpochHashMap);
+        LocationReportsStorage.users.put(locationReport.username, locationReportAtEpochHashMap);
+
+        return locationReport;
     }
+
+    public ArrayList<String> readSyncToGetUserAtPosition(int x, int y, int epoch) throws URISyntaxException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
+        ArrayList<String> usersAtPosition = null;
+        int replicasNumber = AppLifecycleBean.location_servers.entrySet().size();
+        read_list.clear();
+        Iterator serversIterator = AppLifecycleBean.location_servers.entrySet().iterator();
+        LOG.info("READ REGISTER Get user at position: Broadcasting read operation to all servers");
+        while (serversIterator.hasNext()) {
+            Map.Entry server = (Map.Entry) serversIterator.next();
+            String serverName = (String) server.getKey();
+            String serverUrl = (String) server.getValue();
+            String myServerName = System.getenv("SERVER_NAME");
+            String signatureBase64 = signatureService.generateSha256WithRSASignatureForReadRequest(myServerName, this.rid);
+
+            LOG.info("READ REGISTER Get user at position: Broadcasting to server: " + serverUrl);
+            ReadRegisterClient readRegisterClient = RestClientBuilder.newBuilder()
+                    .baseUri(new URI(serverUrl))
+                    .build(ReadRegisterClient.class);
+            ReadRegisterRequest readRegisterRequest = new ReadRegisterRequest(this.rid, x, y, epoch, myServerName, signatureBase64);
+            ReadRegisterReply readRegisterReply = readRegisterClient.submitReadRegisterRequestToGetUsersAtPosition(readRegisterRequest);
+
+            LOG.info("READ REGISTER Get user at position: got reply from server: " + serverUrl);
+            boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForReadReply(
+                    serverName, readRegisterReply.ts, readRegisterReply.rid, readRegisterReply.signatureBase64);
+
+            if(!isSignatureCorrect) {
+                LOG.info("READ REGISTER REQUEST: Signature Validation of read reply Failed. We shall treat this as faulty behavior. Acknowledgment rejected");
+                continue; // Ignore the acknowledgment
+            }
+
+            if(readRegisterReply.usersAtLocation != null) {
+                ArrayList<String> usersAtLocation = readRegisterReply.usersAtLocation;
+
+                DataVersionForUsersAtPosition dv = new DataVersionForUsersAtPosition(readRegisterReply.ts, usersAtLocation);
+                read_list_for_users_at_pos.add(dv);
+            }
+        }
+
+        try {
+            usersAtPosition = getMostRecentUsersAtPosition(replicasNumber);
+            return usersAtPosition;
+        } catch(NullPointerException e) {
+            return null;
+        }
+    }
+
     public String get_location_report(String username, int epoch, String signatureBase64) throws URISyntaxException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
-//        readSync(username, epoch);
+        LocationReport lr = readSyncToGetLocationReport(epoch, username);
         System.out.println("LOCATION REPORT!!");
-        System.out.println(users.toString());
+        System.out.println(LocationReportsStorage.users.toString());
         System.out.println("USERNAME " + username);
         System.out.println("EPOCH " + epoch);
-        LocationReport lr;
-        try{
-            lr = users.get(username).get(epoch);
-        }catch (NullPointerException e){
-            return "Not found";
-        }
+
         System.out.println("DONE");
         return String.format("User %s was at location x:%s y:%s", lr.username, lr.x, lr.y);
     }
 
     public String get_user_at(int x, int y, int epoch) throws URISyntaxException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
-//        readSync(username, epoch);
-        ArrayList<String> users_at_loc = new ArrayList<>();
-        LocationReport lr;
-        try {
-            Iterator it = users.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry pair = (Map.Entry) it.next();
-                lr = users.get(pair.getKey()).get(epoch);
-                if (lr.x == x && lr.y == y) {
-                    users_at_loc.add((String) pair.getKey());
-                }
-            }
-        } catch (NullPointerException e) {
+        ArrayList<String> users_at_loc = readSyncToGetUserAtPosition(x, y, epoch);
+        if(users_at_loc != null) {
+            String.format("READ Get user at: users at the location x:%d, y:%d, epoch:%d are: [%s]", x, y, epoch, users_at_loc.toString());
+            return users_at_loc.toString();
+        } else {
             return "Not found";
         }
-
-        return users_at_loc.toString();
     }
-
 
     public boolean isValidLocationReportNonce(String userId, int nonce) {
 

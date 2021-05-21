@@ -13,5 +13,9 @@ public interface ReadRegisterClient {
 
     @POST
     @Path("/")
-    ReadRegisterReply submitReadRegisterRequest(ReadRegisterRequest readRegisterRequest);
+    ReadRegisterReply submitReadRegisterRequestToGetLocationReport(ReadRegisterRequest readRegisterRequest);
+
+    @POST
+    @Path("/get-at")
+    ReadRegisterReply submitReadRegisterRequestToGetUsersAtPosition(ReadRegisterRequest readRegisterRequest);
 }
