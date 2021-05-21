@@ -51,8 +51,17 @@ public class WriteRegisterService {
             locationService.validateLocationReport(writeRegisterRequest.locationReport);
         }
 
+        WriteRegisterReply writeRegisterReply;
+
+        /**Simulate byzantine behavior by replying with falsy acknowledgment. Demo Purposes */
+        String isByzantine = System.getenv("IS_BYZANTINE");
+        if(isByzantine.equals("true")) {
+            writeRegisterReply = new WriteRegisterReply("false", writeRegisterRequest.wts);
+        } else {
+            writeRegisterReply = new WriteRegisterReply("true", writeRegisterRequest.wts);
+        }
         LOG.info("Submitting Write Register Request ");
-        WriteRegisterReply writeRegisterReply = new WriteRegisterReply("true", writeRegisterRequest.wts);
+
 
         return replyWriteRegisterWithSignature(writeRegisterReply);
     }

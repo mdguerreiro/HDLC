@@ -33,7 +33,6 @@ public class ReadRegisterService {
 
     public ReadRegisterReply replyReadRegisterWithSignature(ReadRegisterReply readRegisterReply) throws UnrecoverableKeyException, CertificateException, KeyStoreException, NoSuchAlgorithmException, IOException, SignatureException, InvalidKeyException {
         String myServerName = System.getenv("SERVER_NAME");
-
         String signatureBase64 = signatureService.generateSha256WithRSASignatureForReadReply(
                 myServerName, readRegisterReply.ts, readRegisterReply.rid);
         readRegisterReply.signatureBase64 = signatureBase64;
@@ -71,8 +70,13 @@ public class ReadRegisterService {
             return new ReadRegisterReply();
         }
 
-        String myServerName = System.getenv("SERVER_NAME");
+        /**Simulate byzantine behavior by replying with falsy Read Replay. Demo Purposes */
+        String isByzantine = System.getenv("IS_BYZANTINE");
+        if(isByzantine.equals("true")) {
+            return new ReadRegisterReply();
+        }
 
+        String myServerName = System.getenv("SERVER_NAME");
         ArrayList<String> usersAtLocation = getUsersAtLocation(readRegisterRequest.x, readRegisterRequest.y, readRegisterRequest.epoch);
 
         ReadRegisterReply readRegisterReply = new ReadRegisterReply();
@@ -90,6 +94,12 @@ public class ReadRegisterService {
 
         if(!isSignatureCorrect) {
             LOG.info("READ REGISTER REPLY: Signature Validation Failed. Aborting");
+            return new ReadRegisterReply();
+        }
+
+        /**Simulate byzantine behavior by replying with falsy Read Replay. Demo Purposes */
+        String isByzantine = System.getenv("IS_BYZANTINE");
+        if(isByzantine.equals("true")) {
             return new ReadRegisterReply();
         }
 

@@ -35,7 +35,8 @@ public class LocationService {
     protected int rid;
     protected List<DataVersion> read_list;
     protected List<DataVersionForUsersAtPosition> read_list_for_users_at_pos;
-    private int f;
+    private int f_byzantine_users;
+    private int f_byzantine_servers;
 
     @Inject
     SignatureService signatureService;
@@ -55,7 +56,9 @@ public class LocationService {
         this.noncesOfUser = new ConcurrentHashMap<>();
         this.write_timestamp = 0;
         this.data_ts = 0;
-        this.f = Integer.parseInt(System.getenv("BYZANTINE_USERS"));
+        this.f_byzantine_users = Integer.parseInt(System.getenv("BYZANTINE_USERS"));
+        this.f_byzantine_servers = Integer.parseInt(System.getenv("BYZANTINE_SERVERS"));
+
         this.read_list = new ArrayList<>();
         this.read_list_for_users_at_pos = new ArrayList<>();
     }
@@ -83,7 +86,7 @@ public class LocationService {
             }
         }
         LOG.info("Number of approved " + counter);
-        if (counter >= (f + 1)) {
+        if (counter >= (f_byzantine_users + 1)) {
             LOG.info("There is byzantine consensus, request was approved.");
             location_reports.put(lr.epoch, lr);
             LocationReportsStorage.users.put(lr.username, location_reports);
@@ -168,9 +171,11 @@ public class LocationService {
                     acknowledgments++;
                 }
 
-                if (acknowledgments > (replicasNumber + f) / 2) {
+                if (acknowledgments > (replicasNumber + f_byzantine_users) / 2) {
                     LOG.info("LOCATION SERVER: " + myServerName + " got acknowledgments from quorum replicas. Sending reply");
                     return "Submitted";
+                } else {
+                    LOG.info("There isn't byzantine consensus between servers, request was denied.");
                 }
             }
         }
@@ -179,7 +184,7 @@ public class LocationService {
 
     private LocationReport getMostRecentLocationReport(int replicasNumber) {
         LocationReport locationReport = null;
-        if(read_list.size() > (replicasNumber + f) / 2){
+        if(read_list.size() > (replicasNumber + f_byzantine_servers) / 2){
             int max = 0;
             for(DataVersion elem: read_list){
                 if(elem.getTS() > max){
@@ -188,13 +193,16 @@ public class LocationService {
                 }
             }
             read_list.clear();
+            LOG.info("Byzantine consensus between servers achieved");
+        } else {
+            LOG.info("There isn't byzantine consensus between servers, request was denied.");
         }
         return locationReport;
     }
 
     private ArrayList<String> getMostRecentUsersAtPosition(int replicasNumber) {
         ArrayList<String> usersAtPosition = null;
-        if(read_list_for_users_at_pos.size() > (replicasNumber + f) / 2){
+        if(read_list_for_users_at_pos.size() > (replicasNumber + f_byzantine_servers) / 2){
             int max = 0;
             for(DataVersionForUsersAtPosition elem: read_list_for_users_at_pos){
                 if(elem.getTS() > max){
@@ -203,6 +211,9 @@ public class LocationService {
                 }
             }
             read_list_for_users_at_pos.clear();
+            LOG.info("Byzantine consensus between servers achieved");
+        } else {
+            LOG.info("There isn't byzantine consensus between servers, request was denied.");
         }
         return usersAtPosition;
     }
@@ -225,10 +236,15 @@ public class LocationService {
             ReadRegisterRequest readRegisterRequest = new ReadRegisterRequest(this.rid, myServerName, username, signatureBase64);
             ReadRegisterReply readRegisterReply = readRegisterClient.submitReadRegisterRequestToGetLocationReport(readRegisterRequest);
 
-            boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForReadReply(
-                    serverName, readRegisterReply.ts, readRegisterReply.rid, readRegisterReply.signatureBase64);
+            try {
+                boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForReadReply(
+                        serverName, readRegisterReply.ts, readRegisterReply.rid, readRegisterReply.signatureBase64);
 
-            if(!isSignatureCorrect) {
+                if(!isSignatureCorrect) {
+                    LOG.info("READ REGISTER REQUEST: Signature Validation of read reply Failed. We shall treat this as faulty behavior. Acknowledgment rejected");
+                    continue; // Ignore the acknowledgment
+                }
+            } catch(Exception e) {
                 LOG.info("READ REGISTER REQUEST: Signature Validation of read reply Failed. We shall treat this as faulty behavior. Acknowledgment rejected");
                 continue; // Ignore the acknowledgment
             }
@@ -269,13 +285,20 @@ public class LocationService {
             ReadRegisterReply readRegisterReply = readRegisterClient.submitReadRegisterRequestToGetUsersAtPosition(readRegisterRequest);
 
             LOG.info("READ REGISTER Get user at position: got reply from server: " + serverUrl);
-            boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForReadReply(
-                    serverName, readRegisterReply.ts, readRegisterReply.rid, readRegisterReply.signatureBase64);
 
-            if(!isSignatureCorrect) {
+            try {
+                boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForReadReply(
+                        serverName, readRegisterReply.ts, readRegisterReply.rid, readRegisterReply.signatureBase64);
+
+                if(!isSignatureCorrect) {
+                    LOG.info("READ REGISTER REQUEST: Signature Validation of read reply Failed. We shall treat this as faulty behavior. Acknowledgment rejected");
+                    continue; // Ignore the acknowledgment
+                }
+            } catch(Exception e) {
                 LOG.info("READ REGISTER REQUEST: Signature Validation of read reply Failed. We shall treat this as faulty behavior. Acknowledgment rejected");
                 continue; // Ignore the acknowledgment
             }
+
 
             if(readRegisterReply.usersAtLocation != null) {
                 ArrayList<String> usersAtLocation = readRegisterReply.usersAtLocation;
