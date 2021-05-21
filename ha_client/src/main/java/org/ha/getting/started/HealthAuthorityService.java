@@ -63,26 +63,25 @@ class HealthAuthorityService{
             e.printStackTrace();
         }
 
-        ObtainUserAtLocationRequest request = new ObtainUserAtLocationRequest(
+
+        ObtainUserAtLocationRequest request1 = new ObtainUserAtLocationRequest(
                 0, //x
                 0, //y
                 ran.nextInt(), //nonce
                 haId //health authority id
         );
-        try {
-            signObtainUserAtLocationRequest(request);
-        }
-        catch(Exception e){
-            LOG.info("Error signing ObtainUserAtLocationRequest ");
-        }
 
-        try {
-            sendObtainUserAtLocationRequest(request);
-        }
-        catch(Exception e){
-            LOG.info("Error sending Request with signature " + request.getHaSignature() );
-            e.printStackTrace();
-        }
+
+        ObtainLocationRequest request2 = new ObtainLocationRequest(
+                "user1",
+                1,
+                ran.nextInt(),
+                haId,
+                "unsigned"
+        );
+
+        //obtainUsersAtLocation(request);
+        obtainLocation(request2);
     }
 
 
@@ -98,6 +97,7 @@ class HealthAuthorityService{
 
         signature.update(request.getUserId().getBytes(StandardCharsets.UTF_8));
         signature.update(String.valueOf(request.getEpoch()).getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(request.getNonce()).getBytes(StandardCharsets.UTF_8));
         signature.update(request.getHaId().getBytes(StandardCharsets.UTF_8));
 
 
@@ -188,5 +188,57 @@ class HealthAuthorityService{
 
     }
 
-    
+    public void sendObtainLocationRequest(ObtainLocationRequest request) throws Exception {
+
+        LOG.info("Submitting Obtain User Location At to the " + serverUrl);
+        LOG.info("Signature - " + request.getHaSignature());
+        LocationServerClient lsc = RestClientBuilder.newBuilder()
+                .baseUri(new URI(serverUrl))
+                .build(LocationServerClient.class);
+        String response = lsc.obtainLocation(request);
+        LOG.info(String.format("Obtain User Location At response - {%s}", response));
+
+    }
+
+
+    private void obtainUsersAtLocation(ObtainUserAtLocationRequest request){
+
+
+        try {
+            signObtainUserAtLocationRequest(request);
+        }
+        catch(Exception e){
+            LOG.info("Error signing ObtainUserAtLocationRequest ");
+        }
+
+        try {
+            sendObtainUserAtLocationRequest(request);
+        }
+        catch(Exception e){
+            LOG.info("Error sending Request with signature " + request.getHaSignature() );
+            e.printStackTrace();
+        }
+    }
+
+
+    private void obtainLocation(ObtainLocationRequest request){
+
+
+        try {
+            signObtainLocationRequest(request);
+        }
+        catch(Exception e){
+            LOG.info("Error signing ObtainLocationRequest ");
+        }
+
+        try {
+            sendObtainLocationRequest(request);
+        }
+        catch(Exception e){
+            LOG.info("Error sending Request with signature " + request.getHaSignature() );
+            e.printStackTrace();
+        }
+    }
+
+
 }

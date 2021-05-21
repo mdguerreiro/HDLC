@@ -4,6 +4,7 @@ import io.quarkus.runtime.Startup;
 
 import org.acme.getting.started.model.LocationProofReply;
 import org.acme.getting.started.model.ha.ObtainUserAtLocationRequest;
+import org.acme.getting.started.model.ha.ObtainLocationRequest;
 
 import org.apache.commons.codec.binary.Base64;
 import org.jboss.logging.Logger;
@@ -81,9 +82,30 @@ public class SignatureService {
 
         return isValid;
 
-
     }
 
+    static public boolean verifySignature(ObtainLocationRequest request) throws Exception{
+
+        //CREATE HA PUB AND PRIV AND CHANGE TO HaID="ha{haId}"
+        String haId = "user5";
+        PublicKey haPublicKey = CryptoKeysUtil.getPublicKeyFromKeystore(haId);
+
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initVerify(haPublicKey);
+
+        signature.update(request.getUserId().getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(request.getEpoch()).getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(request.getNonce()).getBytes(StandardCharsets.UTF_8));
+        signature.update(request.getHaId().getBytes(StandardCharsets.UTF_8));
+
+
+        byte[] requestSignature = Base64.decodeBase64( request.getHaSignature() );
+        boolean isValid = signature.verify(requestSignature);
+
+        return isValid;
+
+
+    }
 
 
 }

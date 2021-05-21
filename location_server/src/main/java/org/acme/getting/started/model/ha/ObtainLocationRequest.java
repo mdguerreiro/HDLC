@@ -6,16 +6,18 @@ public class ObtainLocationRequest implements Serializable {
 
     String userId;
     int epoch;
+    int nonce;
     String haId;
     String haSignature;
 
 
-    public ObtainLocationRequest(String userId, int epoch, String haId, String haSignature){
+    public ObtainLocationRequest(String userId, int epoch,int nonce, String haId, String haSignature){
 
         this.userId = userId;
         this.epoch = epoch;
+        this.nonce = nonce;
         this.haId = haId;
-        this.haSignature = "unsgined";
+        this.haSignature = haSignature;
     }
 
 
@@ -24,6 +26,9 @@ public class ObtainLocationRequest implements Serializable {
     }
     public int getEpoch(){
         return epoch;
+    }
+    public int getNonce(){
+        return nonce;
     }
 
     public String getHaId(){

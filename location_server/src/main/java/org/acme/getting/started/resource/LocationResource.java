@@ -10,6 +10,7 @@ import org.acme.crypto.SignatureService;
 import org.acme.getting.started.model.CipheredLocationReport;
 import org.acme.getting.started.model.LocationReport;
 import org.acme.getting.started.model.ha.ObtainUserAtLocationRequest;
+import org.acme.getting.started.model.ha.ObtainLocationRequest;
 
 import org.acme.getting.started.LocationService;
 import org.acme.getting.started.model.LocationRequest;
@@ -83,5 +84,31 @@ public class LocationResource {
                 request.getY(),
                 request.getEpoch()
         );
+    }
+
+    @POST
+    @Path("/haobtain")
+    public String obtainUsersAtLocation(ObtainLocationRequest request) {
+        // @TODO: LOG INFO
+
+        try{
+            boolean isValidSignature = SignatureService.verifySignature(request);
+            if(!isValidSignature){
+                return "Invalid Signature";
+            }
+        }
+        catch(Exception e){
+            e.printStackTrace();
+            System.out.println(request.getHaSignature());
+            return "Error verifying signature";
+        }
+
+        if(!service.isValidLocationReportNonce(request.getHaId(), request.getNonce())){
+            return "Invalid nonce " +request.getNonce();
+        }
+        service.addUserNonce(request.getHaId(), request.getNonce());
+
+
+        return service.get_location_report(request.getUserId(), request.getEpoch(), request.getHaSignature());
     }
 }
