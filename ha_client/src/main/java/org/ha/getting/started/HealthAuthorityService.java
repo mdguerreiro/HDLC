@@ -1,10 +1,14 @@
 package org.ha.getting.started;
+
+
 import org.ha.getting.started.model.*;
-import org.ha.crypto.SignatureService;
+import org.ha.crypto.*;
+
 import org.ha.getting.started.model.ObtainLocationRequest;
 import org.ha.getting.started.model.ObtainUserAtLocationRequest;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import java.nio.charset.StandardCharsets;
 import java.security.*;
@@ -12,16 +16,15 @@ import java.security.cert.CertificateException;
 
 import org.jboss.logging.Logger;
 
+import io.quarkus.runtime.Startup;
 
 import java.util.Base64;
 
-
+@Startup
+@Singleton
 class HealthAuthorityService{
 
     private static final Logger LOG = Logger.getLogger(HealthAuthorityService.class);
-
-    @Inject
-    SignatureService signatureService;
 
     private String serverId;
 
@@ -31,17 +34,20 @@ class HealthAuthorityService{
 
     public HealthAuthorityService(String haId,String serverId){
 
+        LOG.info(serverId + " " + haId);
+
         this.serverId = serverId;
 
         try {
-            haPrivateKey = signatureService.getPrivateKeyFromKeystore(haId);
-            serverPubKey = signatureService.getPublicKeyFromKeystore(serverId);
+            haPrivateKey = CryptoKeysUtil.getPrivateKeyFromKeystore(haId);
+            serverPubKey = CryptoKeysUtil.getPublicKeyFromKeystore(serverId);
         }
         catch(Exception e){
             //
             haPrivateKey = null;
             serverPubKey = null;
             LOG.info("ERROR LOADING KEYS");
+            e.printStackTrace();
         }
     }
 
@@ -88,7 +94,7 @@ class HealthAuthorityService{
      public boolean verifySignature(ObtainLocationRequest request) throws Exception{
 
         String haId = "user5";
-        PublicKey haPublicKey = signatureService.getPublicKeyFromKeystore(haId);
+        PublicKey haPublicKey = CryptoKeysUtil.getPublicKeyFromKeystore(haId);
 
         Signature signature = Signature.getInstance("SHA256withRSA");
         signature.initVerify(haPublicKey);
@@ -109,7 +115,7 @@ class HealthAuthorityService{
     public boolean verifySignature(ObtainUserAtLocationRequest request) throws Exception{
 
         String haId = "user5";
-        PublicKey haPublicKey = signatureService.getPublicKeyFromKeystore(haId);
+        PublicKey haPublicKey = CryptoKeysUtil.getPublicKeyFromKeystore(haId);
 
         Signature signature = Signature.getInstance("SHA256withRSA");
         signature.initVerify(haPublicKey);
@@ -129,5 +135,5 @@ class HealthAuthorityService{
     }
 
 
-
+    
 }
