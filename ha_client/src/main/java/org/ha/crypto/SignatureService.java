@@ -24,11 +24,12 @@ public class SignatureService {
     final String keyStorePassword = "changeit";
     Util util = new Util();
 
-    public PublicKey getPublicKeyFromKeystore(String username) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
-        String keyAlias = username + "keyStore";
-        String keyStoreLocation = "keys/" + username + "_key_store.p12";
+    public static PublicKey getPublicKeyFromKeystore(String serverName) throws CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException {
+        String keyAlias = serverName + "_key_store";
+        String keyStoreLocation = "keys/" + serverName + "_key_store.p12";
+        String keyStorePassword = serverName + "_pwd";
 
-        InputStream keyPairAsStream = util.getFileFromResourceAsStream(keyStoreLocation);
+        InputStream keyPairAsStream = Util.getFileFromResourceAsStream(keyStoreLocation);
 
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
         keyStore.load(keyPairAsStream, keyStorePassword.toCharArray());
@@ -38,11 +39,13 @@ public class SignatureService {
         return certificate.getPublicKey();
     }
 
-    public PrivateKey getPrivateKeyFromKeystore(String username) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, UnrecoverableKeyException {
-        String keyAlias = username + "keyStore";
-        String keyStoreLocation = "keys/" + username + "_key_store.p12";
 
-        InputStream keyPairAsStream = util.getFileFromResourceAsStream(keyStoreLocation);
+    static public PrivateKey getPrivateKeyFromKeystore(String serverName) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, UnrecoverableKeyException {
+        String keyAlias = serverName + "_key_store";
+        String keyStoreLocation = "keys/" + serverName + "_key_store.p12";
+        String keyStorePassword = serverName + "_pwd";
+
+        InputStream keyPairAsStream = Util.getFileFromResourceAsStream(keyStoreLocation);
 
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
         keyStore.load(keyPairAsStream, keyStorePassword.toCharArray());
