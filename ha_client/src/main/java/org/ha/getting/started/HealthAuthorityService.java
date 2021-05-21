@@ -49,10 +49,13 @@ class HealthAuthorityService{
             LOG.info("ERROR LOADING KEYS");
             e.printStackTrace();
         }
+
+
     }
 
 
     public HealthAuthorityService(){
+        //CREATE HA PUB AND PRIV AND CHANGE TO HaID="ha{haId}"
         this("user5", "location_server_8080");
     }
 
@@ -93,6 +96,7 @@ class HealthAuthorityService{
 
      public boolean verifySignature(ObtainLocationRequest request) throws Exception{
 
+         //CREATE HA PUB AND PRIV AND CHANGE TO HaID="ha{haId}"
         String haId = "user5";
         PublicKey haPublicKey = CryptoKeysUtil.getPublicKeyFromKeystore(haId);
 
@@ -114,6 +118,7 @@ class HealthAuthorityService{
 
     public boolean verifySignature(ObtainUserAtLocationRequest request) throws Exception{
 
+        //CREATE HA PUB AND PRIV AND CHANGE TO HaID="ha{haId}"
         String haId = "user5";
         PublicKey haPublicKey = CryptoKeysUtil.getPublicKeyFromKeystore(haId);
 
