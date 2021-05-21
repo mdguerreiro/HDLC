@@ -72,6 +72,12 @@ public class LocationResource {
             return "Error verifying signature";
         }
 
+        if(!service.isValidLocationReportNonce(request.getHaId(), request.getNonce())){
+            return "Invalid nonce " +request.getNonce();
+        }
+        service.addUserNonce(request.getHaId(), request.getNonce());
+
+
         return service.get_user_at(
                 request.getX(),
                 request.getY(),

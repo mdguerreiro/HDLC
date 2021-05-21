@@ -26,6 +26,8 @@ import java.util.Base64;
 
 import org.ha.getting.started.resource.LocationServerClient;
 
+import java.util.Random;
+
 
 
 @Startup
@@ -40,6 +42,7 @@ class HealthAuthorityService{
     private PrivateKey haPrivateKey;
     private PublicKey serverPubKey;
 
+    Random ran = new Random();
 
     public HealthAuthorityService(String haId,String serverId){
 
@@ -63,7 +66,7 @@ class HealthAuthorityService{
         ObtainUserAtLocationRequest request = new ObtainUserAtLocationRequest(
                 0, //x
                 0, //y
-                3, //nonce
+                ran.nextInt(), //nonce
                 haId //health authority id
         );
         try {
