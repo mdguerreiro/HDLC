@@ -13,7 +13,7 @@ public class ObtainUserAtLocationRequest implements Serializable {
     String haSignature;
 
 
-    public ObtainUserAtLocationRequest(int x, int y,int nonce,  String haId, String haSignature){
+    public ObtainUserAtLocationRequest(int x, int y,int nonce,  String haId){
 
         this.x = x;
         this.y = y;

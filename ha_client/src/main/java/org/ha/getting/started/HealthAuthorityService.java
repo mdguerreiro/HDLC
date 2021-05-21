@@ -14,11 +14,19 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.CertificateException;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
+
 import org.jboss.logging.Logger;
 
 import io.quarkus.runtime.Startup;
 
 import java.util.Base64;
+
+import org.ha.getting.started.resource.LocationServerClient;
+
+
 
 @Startup
 @Singleton
@@ -27,6 +35,7 @@ class HealthAuthorityService{
     private static final Logger LOG = Logger.getLogger(HealthAuthorityService.class);
 
     private String serverId;
+    private String serverUrl;
 
     private PrivateKey haPrivateKey;
     private PublicKey serverPubKey;
@@ -35,6 +44,7 @@ class HealthAuthorityService{
     public HealthAuthorityService(String haId,String serverId){
 
         LOG.info(serverId + " " + haId);
+        serverUrl = "http://localhost:8080";
 
         this.serverId = serverId;
 
@@ -50,7 +60,26 @@ class HealthAuthorityService{
             e.printStackTrace();
         }
 
+        ObtainUserAtLocationRequest request = new ObtainUserAtLocationRequest(
+                0, //x
+                0, //y
+                3, //nonce
+                haId //health authority id
+        );
+        try {
+            signObtainUserAtLocationRequest(request);
+        }
+        catch(Exception e){
+            LOG.info("Error signing ObtainUserAtLocationRequest ");
+        }
 
+        try {
+            sendObtainUserAtLocationRequest(request);
+        }
+        catch(Exception e){
+            LOG.info("Error sending Request with signature " + request.getHaSignature() );
+            e.printStackTrace();
+        }
     }
 
 
@@ -141,6 +170,19 @@ class HealthAuthorityService{
 
     }
 
+
+
+    public void sendObtainUserAtLocationRequest(ObtainUserAtLocationRequest request) throws Exception {
+
+        LOG.info("Submitting Obtain User Location At to the " + serverUrl);
+        LocationServerClient lsc = RestClientBuilder.newBuilder()
+                .baseUri(new URI(serverUrl))
+                .build(LocationServerClient.class);
+        String response = lsc.obtainUsersAtLocation(request);
+        LOG.info(String.format("Obtain User Location At response - {%s}", response));
+
+
+    }
 
     
 }
