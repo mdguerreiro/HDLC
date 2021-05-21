@@ -5,6 +5,7 @@ import io.quarkus.runtime.Startup;
 import org.acme.getting.started.model.LocationProofReply;
 import org.acme.getting.started.model.ha.ObtainUserAtLocationRequest;
 import org.acme.getting.started.model.ha.ObtainLocationRequest;
+import org.acme.getting.started.model.ha.HaResponse;
 
 import org.apache.commons.codec.binary.Base64;
 import org.jboss.logging.Logger;
@@ -107,5 +108,24 @@ public class SignatureService {
 
     }
 
+    static public String signHaResponse(HaResponse response) {
+        try{
+            String serverId = "location_server_8080";
 
+
+            PrivateKey serverPriv= CryptoKeysUtil.getPrivateKeyFromKeystore(serverId);
+            Signature signature = Signature.getInstance("SHA256withRSA");
+            signature.initSign(serverPriv);
+
+            signature.update(response.getText().getBytes(StandardCharsets.UTF_8));
+            signature.update(String.valueOf(response.getNonce()).getBytes(StandardCharsets.UTF_8));
+
+            byte[] signatureByteArray = signature.sign();
+            Base64 b64 = new Base64();
+            return b64.encodeToString(signatureByteArray) ;
+        }
+        catch(Exception e){
+            return "error signing";
+        }
+    }
 }

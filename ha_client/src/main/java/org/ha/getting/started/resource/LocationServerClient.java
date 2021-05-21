@@ -2,6 +2,7 @@ package org.ha.getting.started.resource;
 
 import org.ha.getting.started.model.ObtainUserAtLocationRequest;
 import org.ha.getting.started.model.ObtainLocationRequest;
+import org.ha.getting.started.model.HaResponse;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
@@ -14,9 +15,9 @@ public interface LocationServerClient {
 
     @POST
     @Path("/usersatlocation")
-    String obtainUsersAtLocation(ObtainUserAtLocationRequest request);
+    HaResponse obtainUsersAtLocation(ObtainUserAtLocationRequest request);
 
     @POST
     @Path("/haobtain")
-    String obtainLocation(ObtainLocationRequest request);
+    HaResponse obtainLocation(ObtainLocationRequest request);
 }

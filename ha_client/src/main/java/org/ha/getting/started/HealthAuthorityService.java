@@ -6,6 +6,7 @@ import org.ha.crypto.*;
 
 import org.ha.getting.started.model.ObtainLocationRequest;
 import org.ha.getting.started.model.ObtainUserAtLocationRequest;
+import org.ha.getting.started.model.HaResponse;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -80,8 +81,8 @@ class HealthAuthorityService{
                 "unsigned"
         );
 
-        //obtainUsersAtLocation(request);
-        obtainLocation(request2);
+        obtainUsersAtLocation(request1);
+        //obtainLocation(request2);
     }
 
 
@@ -173,30 +174,60 @@ class HealthAuthorityService{
 
     }
 
+    public boolean verifySignature(HaResponse response) throws Exception{
+
+        //CREATE HA PUB AND PRIV AND CHANGE TO HaID="ha{haId}"
+        String serverId = "location_server_8080";
+        PublicKey serverPublicKey = CryptoKeysUtil.getPublicKeyFromKeystore(serverId);
+
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initVerify(serverPublicKey);
+
+        signature.update(response.getText().getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(response.getNonce()).getBytes(StandardCharsets.UTF_8));
+
+
+        byte[] responseSignature = Base64.getDecoder().decode( response.getServerSign() );
+        boolean isValid = signature.verify(responseSignature);
+
+        return isValid;
+
+
+    }
+
 
 
     public void sendObtainUserAtLocationRequest(ObtainUserAtLocationRequest request) throws Exception {
 
         LOG.info("Submitting Obtain User Location At to the " + serverUrl);
         LOG.info("Signature - "+ request.getHaSignature());
+        LOG.info(String.format(" request nonce  - "+ request.getNonce()));
         LocationServerClient lsc = RestClientBuilder.newBuilder()
                 .baseUri(new URI(serverUrl))
                 .build(LocationServerClient.class);
-        String response = lsc.obtainUsersAtLocation(request);
-        LOG.info(String.format("Obtain User Location At response - {%s}", response));
+        HaResponse response = lsc.obtainUsersAtLocation(request);
+        LOG.info(String.format("Obtain User Location At response - {%s}", response.getText()));
+        LOG.info(String.format(" response signature  - "+ response.getServerSign()));
+        LOG.info(String.format(" response nonce  - "+ response.getNonce()));
+        LOG.info("Valid signature" + verifySignature(response) );
 
 
     }
 
     public void sendObtainLocationRequest(ObtainLocationRequest request) throws Exception {
 
-        LOG.info("Submitting Obtain User Location At to the " + serverUrl);
-        LOG.info("Signature - " + request.getHaSignature());
+        LOG.info("Submitting Obtain Location  to the " + serverUrl);
+        LOG.info("Signature - "+ request.getHaSignature());
+        LOG.info(String.format(" request nonce  - "+ request.getNonce()));
         LocationServerClient lsc = RestClientBuilder.newBuilder()
                 .baseUri(new URI(serverUrl))
                 .build(LocationServerClient.class);
-        String response = lsc.obtainLocation(request);
-        LOG.info(String.format("Obtain User Location At response - {%s}", response));
+        HaResponse response = lsc.obtainLocation(request);
+        LOG.info(String.format("Obtain Location response - {%s}", response.getText()));
+        LOG.info(String.format(" response signature  - "+ response.getServerSign()));
+        LOG.info(String.format(" response nonce  - "+ response.getNonce()));
+        LOG.info("Valid signature" + verifySignature(response) );
+
 
     }
 

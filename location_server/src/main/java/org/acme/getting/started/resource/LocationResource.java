@@ -11,6 +11,7 @@ import org.acme.getting.started.model.CipheredLocationReport;
 import org.acme.getting.started.model.LocationReport;
 import org.acme.getting.started.model.ha.ObtainUserAtLocationRequest;
 import org.acme.getting.started.model.ha.ObtainLocationRequest;
+import org.acme.getting.started.model.ha.HaResponse;
 
 import org.acme.getting.started.LocationService;
 import org.acme.getting.started.model.LocationRequest;
@@ -58,57 +59,96 @@ public class LocationResource {
 
     @POST
     @Path("/usersatlocation")
-    public String obtainUsersAtLocation(ObtainUserAtLocationRequest request) {
+    public HaResponse obtainUsersAtLocation(ObtainUserAtLocationRequest request)   {
         // @TODO: LOG INFO
-
+        HaResponse response;
         try{
             boolean isValidSignature = SignatureService.verifySignature(request);
             if(!isValidSignature){
-                return "Invalid Signature";
+                response = new HaResponse("Invalid Signature", request.getNonce()+1 ,"invalid signature" );
+                String signature = SignatureService.signHaResponse(response);
+                response.setSignature(signature);
+
+                return response;
+
             }
         }
         catch(Exception e){
-            e.printStackTrace();
-            System.out.println(request.getHaSignature());
-            return "Error verifying signature";
+            response = new HaResponse("Error verifying", request.getNonce()+1, "error verifying");
+            String signature = SignatureService.signHaResponse(response);
+            response.setSignature(signature);
+            return response;
         }
 
         if(!service.isValidLocationReportNonce(request.getHaId(), request.getNonce())){
-            return "Invalid nonce " +request.getNonce();
+            response = new HaResponse("invalid nonce", request.getNonce()+1, "invalid nonce");
+            String signature = SignatureService.signHaResponse(response);
+            response.setSignature(signature);
+            return response;
         }
         service.addUserNonce(request.getHaId(), request.getNonce());
 
 
-        return service.get_user_at(
+        String text = service.get_user_at(
                 request.getX(),
                 request.getY(),
                 request.getEpoch()
         );
+
+        response = new HaResponse(text, request.getNonce()+1 ,"signature" );
+        String signature = SignatureService.signHaResponse(response);
+        response.setSignature(signature);
+        return new HaResponse(text,request.getNonce()+1, signature);
+
     }
 
     @POST
     @Path("/haobtain")
-    public String obtainUsersAtLocation(ObtainLocationRequest request) {
+    public HaResponse obtainLocation(ObtainLocationRequest request)  {
         // @TODO: LOG INFO
 
+        HaResponse response;
         try{
             boolean isValidSignature = SignatureService.verifySignature(request);
             if(!isValidSignature){
-                return "Invalid Signature";
+                response = new HaResponse("Invalid Signature", request.getNonce()+1 ,"invalid nonce" );
+                String signature = SignatureService.signHaResponse(response);
+                response.setSignature(signature);
+                return response;
+
             }
         }
         catch(Exception e){
             e.printStackTrace();
             System.out.println(request.getHaSignature());
-            return "Error verifying signature";
+
+            response = new HaResponse("Invalid Signature", request.getNonce()+1 ,"invalid signature" );
+            String signature = SignatureService.signHaResponse(response);
+            response.setSignature(signature);
+            return response;
+
         }
 
         if(!service.isValidLocationReportNonce(request.getHaId(), request.getNonce())){
-            return "Invalid nonce " +request.getNonce();
+            response = new HaResponse("Invalid Signature", request.getNonce()+1 ,"invalid nonce" );
+            String signature = SignatureService.signHaResponse(response);
+            response.setSignature(signature);
+
+            return response;
         }
+
         service.addUserNonce(request.getHaId(), request.getNonce());
 
 
-        return service.get_location_report(request.getUserId(), request.getEpoch(), request.getHaSignature());
+        String text = service.get_location_report(request.getUserId(), request.getEpoch(), request.getHaSignature());
+
+        response = new HaResponse(text, request.getNonce()+1 ,"" );
+        String signature = SignatureService.signHaResponse(response);
+        response.setSignature("hello world");
+
+
+        response = new HaResponse(response.getText(), response.getNonce(), "hello world");
+
+        return response;
     }
 }
