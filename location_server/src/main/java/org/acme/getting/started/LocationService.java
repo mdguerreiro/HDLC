@@ -1,13 +1,9 @@
 package org.acme.getting.started;
 
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
 import org.acme.crypto.SignatureService;
 import org.acme.getting.started.model.LocationProofReply;
 import org.acme.getting.started.model.LocationReport;
 import org.acme.getting.started.persistance.User;
-import org.bson.Document;
 import org.acme.getting.started.model.*;
 import org.acme.getting.started.resource.ReadRegisterClient;
 import org.acme.getting.started.resource.WriteRegisterClient;
@@ -18,9 +14,7 @@ import org.jboss.logging.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.*;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -30,11 +24,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.*;
-import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.lang.Integer;
@@ -56,28 +47,28 @@ public class LocationService {
     @Inject
     SignatureService signatureService;
 
-    private ConcurrentHashMap<String, ConcurrentHashMap> mapUsersFromMongoToJavaObjects(List<User> users) {
-        ConcurrentHashMap<String, ConcurrentHashMap> usersJavaObj = new ConcurrentHashMap<>();
+    private HashMap<String, HashMap<Integer, LocationReport>> mapUsersFromMongoToJavaObjects(List<User> users) {
+        HashMap<String, HashMap<Integer, LocationReport>> usersJavaObj = new HashMap<>();
         return usersJavaObj;
     }
 
     public LocationService() {
         LocationReportsStorage.users = null;
 
-        try{
+//        try{
+//            Stream<User> users = User.streamAll();
+//            List<User> allUsers = users.collect(Collectors.toList());
+//            LOG.info("TEST");
+//            if(allUsers.size() != 0) {
+//                LocationReportsStorage.users = mapUsersFromMongoToJavaObjects(allUsers);
+//            } else {
+//                LocationReportsStorage.users = new HashMap<>();
+//            }
+//        } catch (Exception e) {
+//            LocationReportsStorage.users = new HashMap<>();
+//        }
+        LocationReportsStorage.users = new HashMap<>();
 
-            try (Stream<User> users = User.streamAll()) {
-                List<User> allUsers = users.collect(Collectors.toList());
-                LOG.info("TEST");
-                if(allUsers.size() != 0) {
-                    LocationReportsStorage.users = mapUsersFromMongoToJavaObjects(allUsers);
-                } else {
-                    LocationReportsStorage.users = new ConcurrentHashMap<>();
-                }
-            }
-        } catch (Exception e) {
-            LocationReportsStorage.users = new ConcurrentHashMap<>();
-        }
         this.noncesOfUser = new ConcurrentHashMap<>();
         this.write_timestamp = 0;
         this.data_ts = 0;
@@ -121,7 +112,7 @@ public class LocationService {
         return "Failed";
     }
 
-    private void insertUserToMongoDB(String username, ConcurrentHashMap<Integer, LocationReport> locationReports) {
+    private void insertUserToMongoDB(String username, HashMap<Integer, LocationReport> locationReports) {
         User user = new User();
         user.setUsername(username);
         user.persist();
