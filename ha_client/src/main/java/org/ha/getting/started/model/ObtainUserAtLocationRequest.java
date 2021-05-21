@@ -2,10 +2,12 @@ package org.ha.getting.started.model;
 import java.io.Serializable;
 
 
+
 public class ObtainUserAtLocationRequest implements Serializable {
 
     int x;
     int y;
+    int epoch;
     int nonce;
     String haId;
     String haSignature;
@@ -29,8 +31,10 @@ public class ObtainUserAtLocationRequest implements Serializable {
         return y;
     }
 
-    public int getNonce(){
-        return nonce;
+    public int getNonce(){ return nonce; }
+
+    public int getEpoch(){
+        return epoch;
     }
 
     public String getHaId(){

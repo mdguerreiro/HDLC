@@ -83,6 +83,7 @@ class HealthAuthorityService{
 
         signature.update(String.valueOf(request.getX()).getBytes(StandardCharsets.UTF_8));
         signature.update(String.valueOf(request.getY()).getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(request.getEpoch()).getBytes(StandardCharsets.UTF_8));
         signature.update(String.valueOf(request.getNonce()).getBytes(StandardCharsets.UTF_8));
         signature.update(request.getHaId().getBytes(StandardCharsets.UTF_8));
 
@@ -127,6 +128,7 @@ class HealthAuthorityService{
 
         signature.update(String.valueOf(request.getX()).getBytes(StandardCharsets.UTF_8));
         signature.update(String.valueOf(request.getY()).getBytes(StandardCharsets.UTF_8));
+        signature.update(String.valueOf(request.getEpoch()).getBytes(StandardCharsets.UTF_8));
         signature.update(String.valueOf(request.getNonce()).getBytes(StandardCharsets.UTF_8));
         signature.update(request.getHaId().getBytes(StandardCharsets.UTF_8));
 

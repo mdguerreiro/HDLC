@@ -5,10 +5,15 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import org.acme.crypto.ServerSessionService;
+
 import org.acme.getting.started.model.CipheredLocationReport;
 import org.acme.getting.started.model.LocationReport;
+import org.acme.getting.started.model.ha.ObtainUserAtLocationRequest;
+
 import org.acme.getting.started.LocationService;
 import org.acme.getting.started.model.LocationRequest;
+
+
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
 import java.io.IOException;
@@ -49,11 +54,14 @@ public class LocationResource {
         return service.get_location_report(lr.username, lr.epoch, lr.signatureBase64);
     }
 
-    @GET
-    @Produces(MediaType.TEXT_PLAIN)
-    @Path("/{x}/{y}/{epoch}")
-    public String obtainUsersAtLocation(@PathParam("x") String x, @PathParam("y") String y, @PathParam("epoch") String epoch) {
+    @POST
+    @Path("/usersatlocation")
+    public String obtainUsersAtLocation(ObtainUserAtLocationRequest request) {
         // @TODO: LOG INFO
-        return service.get_user_at(Integer.parseInt(x), Integer.parseInt(y), Integer.parseInt(epoch));
+        return service.get_user_at(
+                request.getX(),
+                request.getY(),
+                request.getEpoch()
+        );
     }
 }
