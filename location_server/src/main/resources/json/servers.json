@@ -1,5 +1,5 @@
 {
-  "location_server_8090":  "http://localhost:8090",
-  "location_server_8091":  "http://localhost:8091",
-  "location_server_8092":  "http://localhost:8092"
+  "location_server_8080":  "http://localhost:8080",
+  "location_server_8081":  "http://localhost:8081",
+  "location_server_8082":  "http://localhost:8082"
 }

@@ -1,9 +1,14 @@
 package org.acme.utils;
 
+import org.acme.getting.started.model.LocationReport;
+import org.acme.getting.started.persistence.User;
+
 import java.io.File;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
 
 public class Util {
     /*
@@ -13,6 +18,21 @@ It throws NoSuchFileException (linux), InvalidPathException (Windows)
 
 Resource URL Sample: file:java-io.jar!/json/file1.json
 */
+
+    public static HashMap<String, HashMap<Integer, LocationReport>> mapUsersFromMongoToJavaObjects(List<User> users) {
+        HashMap<String, HashMap<Integer, LocationReport>> usersJavaObj = new HashMap<>();
+        for(int i = 0; i < users.size(); i++) {
+            String username = users.get(i).getUsername();
+            List<LocationReport> locationReports = users.get(i).locationReports;
+            HashMap<Integer, LocationReport> locationReportHashMap = new HashMap<>();
+            for(int j = 0; j < locationReports.size(); j++) {
+                locationReportHashMap.put(locationReports.get(j).epoch, locationReports.get(j));
+            }
+            usersJavaObj.put(username, locationReportHashMap);
+        }
+        return usersJavaObj;
+    }
+
     public File getFileFromResource(String fileName) throws URISyntaxException {
 
         ClassLoader classLoader = getClass().getClassLoader();
