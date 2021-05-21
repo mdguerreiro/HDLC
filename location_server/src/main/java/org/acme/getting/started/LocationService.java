@@ -1,8 +1,13 @@
 package org.acme.getting.started;
 
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import org.acme.crypto.SignatureService;
 import org.acme.getting.started.model.LocationProofReply;
 import org.acme.getting.started.model.LocationReport;
+import org.acme.getting.started.persistance.User;
+import org.bson.Document;
 import org.jboss.logging.Logger;
 
 import javax.inject.Inject;
@@ -17,9 +22,12 @@ import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.lang.Integer;
 import java.lang.Boolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton
 public class LocationService {
@@ -30,10 +38,25 @@ public class LocationService {
     @Inject
     SignatureService signatureService;
 
+    private ConcurrentHashMap<String, ConcurrentHashMap> mapUsersFromMongoToJavaObjects(List<User> users) {
+        ConcurrentHashMap<String, ConcurrentHashMap> usersJavaObj = new ConcurrentHashMap<>();
+        return usersJavaObj;
+    }
+
     public LocationService() {
         this.users = null;
+
         try{
-            deserializeData();
+
+            try (Stream<User> users = User.streamAll()) {
+                List<User> allUsers = users.collect(Collectors.toList());
+                LOG.info("TEST");
+                if(allUsers.size() != 0) {
+                    this.users = mapUsersFromMongoToJavaObjects(allUsers);
+                } else {
+                    this.users = new ConcurrentHashMap<>();
+                }
+            }
         } catch (Exception e) {
             this.users = new ConcurrentHashMap<>();
         }
@@ -69,13 +92,19 @@ public class LocationService {
             LOG.info("There is byzantine consensus, request was approved.");
             location_reports.put(lr.epoch, lr);
             users.put(lr.username, location_reports);
-            serializeData();
+            insertUserToMongoDB(lr.username, location_reports);
             return "Submitted";
         }
         else{
             LOG.info("There isn't byzantine consensus, request was denied.");
         }
         return "Failed";
+    }
+
+    private void insertUserToMongoDB(String username, ConcurrentHashMap<Integer, LocationReport> locationReports) {
+        User user = new User();
+        user.setUsername(username);
+        user.persist();
     }
 
     public String get_location_report(String username, int epoch, String signatureBase64) {
@@ -109,34 +138,6 @@ public class LocationService {
         }
         System.out.println("DONE");
         return users_at_loc.toString();
-    }
-
-    public void serializeData(){
-        try
-        {
-            ClassLoader classLoader = getClass().getClassLoader();
-            URL resource = classLoader.getResource("hashmap.ser");
-            FileOutputStream fos =
-                    new FileOutputStream(new File(resource.toURI()));
-            ObjectOutputStream oos = new ObjectOutputStream(fos);
-            oos.writeObject(this.users);
-            oos.close();
-            fos.close();
-            System.out.printf("Serialized HashMap data is saved in hashmap.ser");
-        }catch(IOException | URISyntaxException ioe)
-        {
-            ioe.printStackTrace();
-        }
-    }
-
-    public void deserializeData() throws IOException, ClassNotFoundException, URISyntaxException {
-        ClassLoader classLoader = getClass().getClassLoader();
-        URL resource = classLoader.getResource("hashmap.ser");
-        FileInputStream fis = new FileInputStream(new File(resource.toURI()));
-        ObjectInputStream ois = new ObjectInputStream(fis);
-        this.users = (ConcurrentHashMap) ois.readObject();
-        ois.close();
-        fis.close();
     }
 
     public boolean isValidLocationReportNonce(String userId, int nonce){
