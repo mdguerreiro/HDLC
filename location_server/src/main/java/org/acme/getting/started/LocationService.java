@@ -2,6 +2,7 @@ package org.acme.getting.started;
 
 import org.acme.crypto.SignatureService;
 import org.acme.getting.started.model.*;
+import org.acme.getting.started.persistence.User;
 import org.acme.getting.started.resource.ReadRegisterClient;
 import org.acme.getting.started.resource.WriteRegisterClient;
 import org.acme.getting.started.storage.LocationReportsStorage;
@@ -21,6 +22,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.lang.Integer;
 import java.lang.Boolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton
 public class LocationService {
@@ -37,6 +40,18 @@ public class LocationService {
     SignatureService signatureService;
 
     public LocationService() {
+//        try{
+//            Stream<User> users = User.streamAll();
+//            List<User> allUsers = users.collect(Collectors.toList());
+//            LOG.info("TEST");
+//            if(allUsers.size() != 0) {
+//                LocationReportsStorage.users = mapUsersFromMongoToJavaObjects(allUsers);
+//            } else {
+//                LocationReportsStorage.users = new HashMap<>();
+//            }
+//        } catch (Exception e) {
+//            LocationReportsStorage.users = new HashMap<>();
+//        }
         LocationReportsStorage.users = new HashMap<>();
         this.noncesOfUser = new ConcurrentHashMap<>();
         this.write_timestamp = 0;
@@ -44,6 +59,11 @@ public class LocationService {
         this.f = Integer.parseInt(System.getenv("BYZANTINE_USERS"));
         this.read_list = new ArrayList<>();
         this.read_list_for_users_at_pos = new ArrayList<>();
+    }
+
+    private HashMap<String, HashMap<Integer, LocationReport>> mapUsersFromMongoToJavaObjects(List<User> users) {
+        HashMap<String, HashMap<Integer, LocationReport>> usersJavaObj = new HashMap<>();
+        return usersJavaObj;
     }
 
     public String validateLocationReport(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
@@ -73,11 +93,18 @@ public class LocationService {
             LOG.info("There is byzantine consensus, request was approved.");
             location_reports.put(lr.epoch, lr);
             LocationReportsStorage.users.put(lr.username, location_reports);
+            insertUserToMongoDB(lr.username, location_reports);
             return "Submitted";
         } else {
             LOG.info("There isn't byzantine consensus, request was denied.");
         }
         return "Failed";
+    }
+
+    private void insertUserToMongoDB(String username, HashMap<Integer, LocationReport> locationReports) {
+        User user = new User();
+        user.setUsername(username);
+        user.persist();
     }
 
     public String submit_location_report(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, URISyntaxException, UnrecoverableKeyException {
