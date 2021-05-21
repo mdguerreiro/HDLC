@@ -1,21 +1,22 @@
 package org.acme.getting.started.persistence;
 
 import io.quarkus.mongodb.panache.MongoEntity;
-import io.quarkus.mongodb.panache.PanacheMongoEntity;
+import io.quarkus.mongodb.panache.PanacheMongoEntityBase;
+
+import org.acme.getting.started.model.LocationReport;
+import org.bson.types.ObjectId;
+
+import java.util.List;
 
 @MongoEntity(collection="user")
-public class User extends PanacheMongoEntity {
-    public Long id;
+public class User extends PanacheMongoEntityBase {
+
+    ObjectId _id;
+
     private String username;
-//    private List<>
+    public List<LocationReport> locationReports;
 
-    public Long getId() {
-        return id;
-    }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getUsername() {
         return username;
@@ -23,10 +24,5 @@ public class User extends PanacheMongoEntity {
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    @Override
-    public String toString() {
-        return "";
     }
 }

@@ -2,18 +2,19 @@ package org.acme.getting.started;
 
 import org.acme.crypto.SignatureService;
 import org.acme.getting.started.model.*;
+
 import org.acme.getting.started.persistence.User;
 import org.acme.getting.started.resource.ReadRegisterClient;
 import org.acme.getting.started.resource.WriteRegisterClient;
 import org.acme.getting.started.storage.LocationReportsStorage;
 import org.acme.lifecycle.AppLifecycleBean;
+import org.acme.utils.Util;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.jboss.logging.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.*;
@@ -40,30 +41,23 @@ public class LocationService {
     SignatureService signatureService;
 
     public LocationService() {
-//        try{
-//            Stream<User> users = User.streamAll();
-//            List<User> allUsers = users.collect(Collectors.toList());
-//            LOG.info("TEST");
-//            if(allUsers.size() != 0) {
-//                LocationReportsStorage.users = mapUsersFromMongoToJavaObjects(allUsers);
-//            } else {
-//                LocationReportsStorage.users = new HashMap<>();
-//            }
-//        } catch (Exception e) {
-//            LocationReportsStorage.users = new HashMap<>();
-//        }
-        LocationReportsStorage.users = new HashMap<>();
+        try{
+            Stream<User> users = User.streamAll();
+            List<User> allUsers = users.collect(Collectors.toList());
+            if(allUsers.size() != 0) {
+                 LocationReportsStorage.users = Util.mapUsersFromMongoToJavaObjects(allUsers);
+            } else {
+                LocationReportsStorage.users = new HashMap<>();
+            }
+        } catch (Exception e) {
+            LocationReportsStorage.users = new HashMap<>();
+        }
         this.noncesOfUser = new ConcurrentHashMap<>();
         this.write_timestamp = 0;
         this.data_ts = 0;
         this.f = Integer.parseInt(System.getenv("BYZANTINE_USERS"));
         this.read_list = new ArrayList<>();
         this.read_list_for_users_at_pos = new ArrayList<>();
-    }
-
-    private HashMap<String, HashMap<Integer, LocationReport>> mapUsersFromMongoToJavaObjects(List<User> users) {
-        HashMap<String, HashMap<Integer, LocationReport>> usersJavaObj = new HashMap<>();
-        return usersJavaObj;
     }
 
     public String validateLocationReport(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
@@ -101,10 +95,34 @@ public class LocationService {
         return "Failed";
     }
 
+    private List<LocationReport> convertHashMapToArray(HashMap<Integer, LocationReport> locationReports) {
+        ArrayList<LocationReport> array = new ArrayList<>();
+        Iterator locationReportsIterator = locationReports.entrySet().iterator();
+        while (locationReportsIterator.hasNext()) {
+            Map.Entry locationReportEpoch = (Map.Entry) locationReportsIterator.next();
+            LocationReport locationReport = (LocationReport) locationReportEpoch.getValue();
+            array.add(locationReport);
+        }
+
+        return array;
+    }
+
     private void insertUserToMongoDB(String username, HashMap<Integer, LocationReport> locationReports) {
-        User user = new User();
-        user.setUsername(username);
-        user.persist();
+        if(username != null && username != "") {
+            LOG.info("Inserting data into mongoDB: username=" + username);
+            User userToUpdate = User.find("username", username).firstResult();
+
+            if(userToUpdate != null) {
+                LOG.info("User already exists. Updating user=" + username);
+            } else {
+                LOG.info("New User already exists. Creating user=" + username);
+                List<LocationReport> locationReportList = convertHashMapToArray(locationReports);
+                User newUser = new User();
+                newUser.setUsername(username);
+                newUser.locationReports = locationReportList;
+                newUser.persist();
+            }
+        }
     }
 
     public String submit_location_report(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, URISyntaxException, UnrecoverableKeyException {

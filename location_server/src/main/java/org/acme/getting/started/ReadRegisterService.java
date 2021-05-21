@@ -2,7 +2,9 @@ package org.acme.getting.started;
 
 import org.acme.crypto.SignatureService;
 import org.acme.getting.started.model.*;
+import org.acme.getting.started.persistence.User;
 import org.acme.getting.started.storage.LocationReportsStorage;
+import org.acme.utils.Util;
 import org.jboss.logging.Logger;
 
 import javax.inject.Inject;
@@ -10,9 +12,9 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton
 public class ReadRegisterService {
@@ -41,6 +43,11 @@ public class ReadRegisterService {
     private ArrayList<String> getUsersAtLocation(int x, int y, int epoch) {
         ArrayList<String> users_at_loc = new ArrayList<>();
         try {
+            Stream<User> users = User.streamAll();
+            List<User> allUsers = users.collect(Collectors.toList());
+            if(allUsers.size() != 0) {
+                LocationReportsStorage.users = Util.mapUsersFromMongoToJavaObjects(allUsers);
+            }
             Iterator it = LocationReportsStorage.users.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry pair = (Map.Entry) it.next();
