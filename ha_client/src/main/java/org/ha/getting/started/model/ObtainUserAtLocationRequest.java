@@ -48,4 +48,8 @@ public class ObtainUserAtLocationRequest implements Serializable {
     public void setSignature(String b64Signature){
         this.haSignature = b64Signature;
     }
+
+    public String toString(){
+        return haSignature;
+    }
 }

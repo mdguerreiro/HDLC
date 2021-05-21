@@ -18,7 +18,7 @@ public class ObtainUserAtLocationRequest implements Serializable {
         this.y = y;
         this.nonce = nonce;
         this.haId = haId;
-        this.haSignature = "unsgined";
+        this.haSignature = haSignature;
     }
 
 

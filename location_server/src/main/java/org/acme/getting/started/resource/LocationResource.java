@@ -5,6 +5,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import org.acme.crypto.ServerSessionService;
+import org.acme.crypto.SignatureService;
 
 import org.acme.getting.started.model.CipheredLocationReport;
 import org.acme.getting.started.model.LocationReport;
@@ -58,6 +59,19 @@ public class LocationResource {
     @Path("/usersatlocation")
     public String obtainUsersAtLocation(ObtainUserAtLocationRequest request) {
         // @TODO: LOG INFO
+
+        try{
+            boolean isValidSignature = SignatureService.verifySignature(request);
+            if(!isValidSignature){
+                return "Invalid Signature";
+            }
+        }
+        catch(Exception e){
+            e.printStackTrace();
+            System.out.println(request.getHaSignature());
+            return "Error verifying signature";
+        }
+
         return service.get_user_at(
                 request.getX(),
                 request.getY(),

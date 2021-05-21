@@ -175,6 +175,7 @@ class HealthAuthorityService{
     public void sendObtainUserAtLocationRequest(ObtainUserAtLocationRequest request) throws Exception {
 
         LOG.info("Submitting Obtain User Location At to the " + serverUrl);
+        LOG.info("Signature - "+ request.getHaSignature());
         LocationServerClient lsc = RestClientBuilder.newBuilder()
                 .baseUri(new URI(serverUrl))
                 .build(LocationServerClient.class);
