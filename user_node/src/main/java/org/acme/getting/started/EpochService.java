@@ -26,6 +26,8 @@ import java.util.*;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import javax.ws.rs.ProcessingException;
+
 
 @Startup
 @Singleton
@@ -44,11 +46,20 @@ public class EpochService {
                 Map.Entry server = (Map.Entry)serversIterator.next();
                 String serverName = (String) server.getKey();
                 String serverUrl = (String) server.getValue();
-                getServerSessionKey(serverName, serverUrl);
+
+                try {
+                    getServerSessionKey(serverName, serverUrl);
+                }
+                catch(javax.ws.rs.ProcessingException e){
+                    LOG.info("Server " + serverUrl + " is unavailable "  );
+                }
+
                 LOG.info("Server " + serverUrl + " - Session key is - " + sessionService.getSessionKey(serverUrl));
             }
             LOG.info("Epoch service startup ");
         }
+
+
         catch(Exception e){
             e.printStackTrace();
         }
