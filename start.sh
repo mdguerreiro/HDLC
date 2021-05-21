@@ -1,6 +1,6 @@
 export SERVER_NAME="location_server_8080" && PORT="8080" && IS_BYZANTINE=false && BYZANTINE_SERVERS=1 && BYZANTINE_USERS=1 && cd location_server && ./mvnw compile quarkus:dev -DdebugHost=0.0.0.0 &
 sleep 1
-export SERVER_NAME="location_server_8081" && PORT="8081" && IS_BYZANTINE=true && BYZANTINE_SERVERS=1 && BYZANTINE_USERS=1 && cd location_server && ./mvnw compile quarkus:dev -DdebugHost=0.0.0.0 &
+export SERVER_NAME="location_server_8081" && PORT="8081" && IS_BYZANTINE=false && BYZANTINE_SERVERS=1 && BYZANTINE_USERS=1 && cd location_server && ./mvnw compile quarkus:dev -DdebugHost=0.0.0.0 &
 sleep 1
 export SERVER_NAME="location_server_8082" && PORT="8082" && IS_BYZANTINE=true && BYZANTINE_SERVERS=1 && BYZANTINE_USERS=1 && cd location_server && ./mvnw compile quarkus:dev -DdebugHost=0.0.0.0 &
 sleep 1
