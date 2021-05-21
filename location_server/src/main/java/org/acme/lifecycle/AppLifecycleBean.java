@@ -21,6 +21,7 @@ public class AppLifecycleBean {
     private static final Logger LOGGER = Logger.getLogger("ListenerBean");
     public static final String SERVERS_PATH = "classes/json/servers.json";
     public static HashMap<String, String> location_servers = new HashMap<>();
+    public static HashMap<String, Integer> listening = new HashMap<>();
 
     void onStart(@Observes StartupEvent ev) {
         load_json_servers();
@@ -39,6 +40,7 @@ public class AppLifecycleBean {
 
             for (Object temp : jsonObject.keySet()){
                 location_servers.put((String) temp, (String) jsonObject.get(temp));
+                listening.put((String) temp, -1);
             }
 
         } catch (FileNotFoundException e) {

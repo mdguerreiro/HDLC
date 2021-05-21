@@ -1,17 +1,22 @@
 package org.acme.getting.started;
 
 import org.acme.crypto.SignatureService;
-import org.acme.getting.started.model.LocationReport;
-import org.acme.getting.started.model.WriteRegisterReply;
-import org.acme.getting.started.model.WriteRegisterRequest;
+import org.acme.getting.started.model.*;
+import org.acme.getting.started.resource.WriteRegisterClient;
 import org.acme.getting.started.storage.LocationReportsStorage;
+import org.acme.lifecycle.AppLifecycleBean;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.jboss.logging.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.util.Iterator;
+import java.util.Map;
 
 @Singleton
 public class WriteRegisterService {
@@ -35,16 +40,7 @@ public class WriteRegisterService {
         return writeRegisterReply;
     }
 
-    public WriteRegisterReply submitWriteRegisterRequest(WriteRegisterRequest writeRegisterRequest) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, UnrecoverableKeyException {
-        boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForWriteRequest(
-                writeRegisterRequest.senderServerName, writeRegisterRequest.locationReport, writeRegisterRequest.signatureBase64);
-
-        if(!isSignatureCorrect) {
-            LOG.info("WRITE REGISTER REPLY: Signature Validation Failed. Aborting");
-            WriteRegisterReply writeRegisterReply = new WriteRegisterReply();
-            writeRegisterReply.acknowledgment = "false";
-            return new WriteRegisterReply();
-        }
+    public WriteRegisterReply submitWriteRegisterRequest(WriteRegisterRequest writeRegisterRequest) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, UnrecoverableKeyException, URISyntaxException {
 
         if(writeRegisterRequest.wts > locationService.data_ts){
             locationService.data_ts = writeRegisterRequest.wts;
@@ -52,8 +48,28 @@ public class WriteRegisterService {
         }
 
         LOG.info("Submitting Write Register Request ");
+        // FOR LOOP FOR ALL PROCESSES LISTENING
+        Iterator it = AppLifecycleBean.listening.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry)it.next();
+            String url = AppLifecycleBean.location_servers.get((String) pair.getKey());
+            if((Integer) pair.getValue() != -1){
+                WriteRegisterClient writeRegisterClient = RestClientBuilder.newBuilder()
+                        .baseUri(new URI(url))
+                        .build(WriteRegisterClient.class);
+                ValueRegisterRequest valueRegisterRequest = new ValueRegisterRequest(writeRegisterRequest.locationReport,
+                        writeRegisterRequest.wts, (Integer) pair.getValue());
+                ValueRegisterReply valueRegisterReply = writeRegisterClient.submitValueRegisterRequest(valueRegisterRequest);
+            }
+
+        }
+
         WriteRegisterReply writeRegisterReply = new WriteRegisterReply("true", writeRegisterRequest.wts);
 
         return replyWriteRegisterWithSignature(writeRegisterReply);
+    }
+
+    public ValueRegisterReply submitValueRegisterRequest(ValueRegisterRequest vrq) {
+        return new ValueRegisterReply();
     }
 }

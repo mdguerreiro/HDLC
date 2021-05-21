@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public class ReadRegisterReply implements Serializable {
-    public String signatureBase64;
     public String senderServerName;
     public LocationReport lr;
     public ArrayList<String> usersAtLocation;
@@ -15,8 +14,7 @@ public class ReadRegisterReply implements Serializable {
 
     }
 
-    public ReadRegisterReply(String signatureBase64, String senderServerName, LocationReport lr, int ts, int rid){
-        this.signatureBase64 = signatureBase64;
+    public ReadRegisterReply(String senderServerName, LocationReport lr, int ts, int rid){
         this.senderServerName = senderServerName;
         this.ts = ts;
         this.ts = rid;

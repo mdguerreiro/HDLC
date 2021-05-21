@@ -30,6 +30,9 @@ public class LocationService {
     protected int write_timestamp;
     protected int rid;
     protected List<DataVersion> read_list;
+    protected List<String> listening;
+    protected List<List<String>> answers;
+
     protected List<DataVersionForUsersAtPosition> read_list_for_users_at_pos;
     private int f;
 
@@ -43,7 +46,9 @@ public class LocationService {
         this.data_ts = 0;
         this.f = Integer.parseInt(System.getenv("BYZANTINE_USERS"));
         this.read_list = new ArrayList<>();
+        this.answers = new ArrayList<>();
         this.read_list_for_users_at_pos = new ArrayList<>();
+        this.rid = 0;
     }
 
     public String validateLocationReport(LocationReport lr) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
@@ -102,22 +107,11 @@ public class LocationService {
                 String serverName = (String) server.getKey();
                 String serverUrl = (String) server.getValue();
 
-                String signatureBase64 = signatureService.generateSha256WithRSASignatureForWriteRequest(myServerName, lr);
-
                 WriteRegisterClient writeRegisterClient = RestClientBuilder.newBuilder()
                         .baseUri(new URI(serverUrl))
                         .build(WriteRegisterClient.class);
-                WriteRegisterRequest writerRegisterRequest = new WriteRegisterRequest(lr, signatureBase64, myServerName,
-                        this.write_timestamp);
+                WriteRegisterRequest writerRegisterRequest = new WriteRegisterRequest(lr, myServerName, this.write_timestamp);
                 WriteRegisterReply writeRegisterReply = writeRegisterClient.submitWriteRegisterRequest(writerRegisterRequest);
-
-                boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForWriteReply(
-                        serverName, writeRegisterReply.acknowledgment, writeRegisterReply.ts, writeRegisterReply.signatureBase64);
-
-                if(!isSignatureCorrect) {
-                    LOG.info("WRITE REGISTER REQUEST: Signature Validation of write reply Failed. We shall treat this as faulty behavior. Acknowledgment rejected");
-                    continue; // Ignore the acknowledgment
-                }
 
                 if (writeRegisterReply.acknowledgment.equals("true")) {
                     acknowledgments++;
@@ -163,6 +157,8 @@ public class LocationService {
     }
 
     public LocationReport readSyncToGetLocationReport(int epoch, String username) throws URISyntaxException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException {
+        this.rid ++;
+        this.answers.clear();
         LocationReport locationReport = null;
         int replicasNumber = AppLifecycleBean.location_servers.entrySet().size();
         read_list.clear();
@@ -172,21 +168,26 @@ public class LocationService {
             String serverName = (String) server.getKey();
             String serverUrl = (String) server.getValue();
             String myServerName = System.getenv("SERVER_NAME");
-            String signatureBase64 = signatureService.generateSha256WithRSASignatureForReadRequest(myServerName, this.rid);
 
             ReadRegisterClient readRegisterClient = RestClientBuilder.newBuilder()
                     .baseUri(new URI(serverUrl))
                     .build(ReadRegisterClient.class);
-            ReadRegisterRequest readRegisterRequest = new ReadRegisterRequest(this.rid, myServerName, username, signatureBase64);
+            ReadRegisterRequest readRegisterRequest = new ReadRegisterRequest(this.rid, myServerName, username);
             ReadRegisterReply readRegisterReply = readRegisterClient.submitReadRegisterRequestToGetLocationReport(readRegisterRequest);
 
-            boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForReadReply(
-                    serverName, readRegisterReply.ts, readRegisterReply.rid, readRegisterReply.signatureBase64);
+            if(readRegisterReply.rid == this.rid){
+                List<String> processes = new ArrayList<>();
+                try{
+                    processes = this.answers.get(readRegisterReply.ts);
+                    processes.get(processes.indexOf(readRegisterReply.senderServerName));
+                }catch (Exception e){
+                    processes.add(readRegisterReply.senderServerName);
+                    answers.add(readRegisterReply.ts, processes);
+                }
 
-            if(!isSignatureCorrect) {
-                LOG.info("READ REGISTER REQUEST: Signature Validation of read reply Failed. We shall treat this as faulty behavior. Acknowledgment rejected");
-                continue; // Ignore the acknowledgment
             }
+            System.out.println("EPAA");
+            System.out.println(answers.toString());
 
             locationReport = readRegisterReply.lr;
 
@@ -214,23 +215,16 @@ public class LocationService {
             String serverName = (String) server.getKey();
             String serverUrl = (String) server.getValue();
             String myServerName = System.getenv("SERVER_NAME");
-            String signatureBase64 = signatureService.generateSha256WithRSASignatureForReadRequest(myServerName, this.rid);
 
             LOG.info("READ REGISTER Get user at position: Broadcasting to server: " + serverUrl);
             ReadRegisterClient readRegisterClient = RestClientBuilder.newBuilder()
                     .baseUri(new URI(serverUrl))
                     .build(ReadRegisterClient.class);
-            ReadRegisterRequest readRegisterRequest = new ReadRegisterRequest(this.rid, x, y, epoch, myServerName, signatureBase64);
+            ReadRegisterRequest readRegisterRequest = new ReadRegisterRequest(this.rid, x, y, epoch, myServerName);
             ReadRegisterReply readRegisterReply = readRegisterClient.submitReadRegisterRequestToGetUsersAtPosition(readRegisterRequest);
 
             LOG.info("READ REGISTER Get user at position: got reply from server: " + serverUrl);
-            boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForReadReply(
-                    serverName, readRegisterReply.ts, readRegisterReply.rid, readRegisterReply.signatureBase64);
 
-            if(!isSignatureCorrect) {
-                LOG.info("READ REGISTER REQUEST: Signature Validation of read reply Failed. We shall treat this as faulty behavior. Acknowledgment rejected");
-                continue; // Ignore the acknowledgment
-            }
 
             if(readRegisterReply.usersAtLocation != null) {
                 ArrayList<String> usersAtLocation = readRegisterReply.usersAtLocation;

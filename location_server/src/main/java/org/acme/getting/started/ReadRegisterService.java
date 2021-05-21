@@ -3,6 +3,7 @@ package org.acme.getting.started;
 import org.acme.crypto.SignatureService;
 import org.acme.getting.started.model.*;
 import org.acme.getting.started.storage.LocationReportsStorage;
+import org.acme.lifecycle.AppLifecycleBean;
 import org.jboss.logging.Logger;
 
 import javax.inject.Inject;
@@ -29,15 +30,6 @@ public class ReadRegisterService {
     }
 
 
-    public ReadRegisterReply replyReadRegisterWithSignature(ReadRegisterReply readRegisterReply) throws UnrecoverableKeyException, CertificateException, KeyStoreException, NoSuchAlgorithmException, IOException, SignatureException, InvalidKeyException {
-        String myServerName = System.getenv("SERVER_NAME");
-
-        String signatureBase64 = signatureService.generateSha256WithRSASignatureForReadReply(
-                myServerName, readRegisterReply.ts, readRegisterReply.rid);
-        readRegisterReply.signatureBase64 = signatureBase64;
-        return readRegisterReply;
-    }
-
     private ArrayList<String> getUsersAtLocation(int x, int y, int epoch) {
         ArrayList<String> users_at_loc = new ArrayList<>();
         try {
@@ -56,13 +48,7 @@ public class ReadRegisterService {
     }
 
     public ReadRegisterReply submitReadRegisterRequestToGetUsersAtPosition(ReadRegisterRequest readRegisterRequest) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, UnrecoverableKeyException {
-        boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForReadRequest(
-                readRegisterRequest.senderServerName, readRegisterRequest.rid, readRegisterRequest.signatureBase64);
 
-        if(!isSignatureCorrect) {
-            LOG.info("READ REGISTER REPLY: Signature Validation Failed. Aborting");
-            return new ReadRegisterReply();
-        }
 
         String myServerName = System.getenv("SERVER_NAME");
 
@@ -74,22 +60,15 @@ public class ReadRegisterService {
         readRegisterReply.rid = readRegisterRequest.rid;
         readRegisterReply.usersAtLocation = usersAtLocation;
         LOG.info("READ REQUEST MADE - SENDING REPLY TO READER SERVER");
-        return replyReadRegisterWithSignature(readRegisterReply);
+        return readRegisterReply;
     }
 
     public ReadRegisterReply submitReadRegisterRequestToGetLocationReport(ReadRegisterRequest readRegisterRequest) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SignatureException, InvalidKeyException, UnrecoverableKeyException {
-        boolean isSignatureCorrect = signatureService.verifySha256WithRSASignatureForReadRequest(
-                readRegisterRequest.senderServerName, readRegisterRequest.rid, readRegisterRequest.signatureBase64);
-
-        if(!isSignatureCorrect) {
-            LOG.info("READ REGISTER REPLY: Signature Validation Failed. Aborting");
-            return new ReadRegisterReply();
-        }
 
         String myServerName = System.getenv("SERVER_NAME");
         int epoch = readRegisterRequest.epoch;
         String username = readRegisterRequest.username;
-
+        AppLifecycleBean.listening.put(readRegisterRequest.senderServerName, readRegisterRequest.rid);
         LocationReport lr;
         try {
             lr = LocationReportsStorage.users.get(username).get(epoch);
@@ -102,6 +81,6 @@ public class ReadRegisterService {
         readRegisterReply.rid = readRegisterRequest.rid;
         readRegisterReply.lr = lr;
         LOG.info("READ REQUEST MADE - SENDING REPLY TO READER SERVER");
-        return replyReadRegisterWithSignature(readRegisterReply);
+        return readRegisterReply;
     }
 }
