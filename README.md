@@ -1,3 +1,4 @@
+## Highly-Dependable User Location-Tracking System (BFT)
 ## Demonstration
 
 Just run ./start.sh to see a demo running. After the execution, please run stop.sh to shutdown the services. The demo will emulate the behaviour of a grid defined in user_node/src/main/resources/json/grid.json. The keys of this dictionary represent the epochs.
